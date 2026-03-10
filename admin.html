@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LetterMatch Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:#0F0C09;color:#E8E0D4;min-height:100vh;-webkit-font-smoothing:antialiased;}
+:root{--red:#C0442A;--gold:#C9A040;--dark:#1A1208;--line:rgba(255,255,255,0.08);--card:rgba(255,255,255,0.04);}
+
+/* ── SIDEBAR ── */
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:220px;flex-shrink:0;background:#0A0806;border-right:1px solid var(--line);padding:24px 0;display:flex;flex-direction:column;}
+.sb-logo{padding:0 20px 24px;border-bottom:1px solid var(--line);margin-bottom:24px;}
+.sb-logo span{font-family:'Lora',serif;font-size:15px;font-weight:700;color:white;}
+.sb-logo span b{color:var(--red);}
+.sb-logo .badge{font-size:9px;background:#2A1A0A;color:var(--gold);padding:2px 8px;border-radius:100px;margin-top:6px;display:inline-block;letter-spacing:.1em;text-transform:uppercase;}
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:0 10px;}
+.sb-nav a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-size:13px;color:rgba(255,255,255,.45);text-decoration:none;transition:all .15s;}
+.sb-nav a:hover{background:rgba(255,255,255,.06);color:white;}
+.sb-nav a.active{background:rgba(192,68,42,.15);color:var(--red);}
+.sb-nav .sb-icon{font-size:16px;width:20px;text-align:center;}
+.sb-section{font-size:9px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:16px 22px 6px;}
+.sb-bottom{margin-top:auto;padding:16px 10px 0;border-top:1px solid var(--line);}
+.sb-back{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;font-size:12px;color:rgba(255,255,255,.3);text-decoration:none;transition:all .15s;}
+.sb-back:hover{color:white;}
+
+/* ── MAIN ── */
+.main{flex:1;padding:32px;overflow-x:hidden;}
+.page-header{margin-bottom:32px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.page-header h1{font-family:'Lora',serif;font-size:28px;font-weight:700;color:white;}
+.page-header p{font-size:13px;color:rgba(255,255,255,.35);margin-top:4px;}
+.header-actions{display:flex;gap:10px;align-items:center;}
+.btn{padding:9px 20px;border-radius:100px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all .15s;border:none;}
+.btn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);}
+.btn-ghost:hover{border-color:white;color:white;}
+.btn-red{background:var(--red);color:white;}
+.btn-red:hover{background:#A33520;}
+.btn-gold{background:var(--gold);color:#1A1208;}
+.btn-gold:hover{opacity:.88;}
+
+/* ── STAT CARDS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 22px;}
+.sc-label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:12px;}
+.sc-value{font-family:'Lora',serif;font-size:42px;font-weight:700;line-height:1;color:white;}
+.sc-sub{font-size:12px;color:rgba(255,255,255,.3);margin-top:6px;}
+.sc-trend{font-size:11px;color:#5A9E6A;margin-top:4px;}
+
+/* ── PROGRESS BAR ── */
+.progress-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 28px;margin-bottom:32px;}
+.pc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.pc-title{font-size:14px;font-weight:500;color:rgba(255,255,255,.8);}
+.pc-pct{font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--gold);}
+.pc-bar{height:8px;background:rgba(255,255,255,.07);border-radius:100px;overflow:hidden;margin-bottom:10px;}
+.pc-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:100px;transition:width 1s ease;}
+.pc-labels{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.25);}
+
+/* ── TABLE ── */
+.table-section{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-bottom:32px;}
+.table-header{padding:20px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);}
+.table-header h3{font-size:15px;font-weight:500;color:white;}
+.table-header .th-count{font-size:12px;color:rgba(255,255,255,.3);background:rgba(255,255,255,.06);padding:3px 10px;border-radius:100px;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:rgba(255,255,255,.03);}
+th{padding:10px 16px;font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.25);text-align:left;white-space:nowrap;}
+td{padding:13px 16px;font-size:13px;color:rgba(255,255,255,.65);border-top:1px solid rgba(255,255,255,.04);vertical-align:top;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.td-email{color:white;font-weight:500;}
+.td-answer{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-style:italic;color:rgba(255,255,255,.45);}
+.badge-type{display:inline-block;padding:2px 10px;border-radius:100px;font-size:10px;font-weight:500;}
+.badge-waitlist{background:rgba(90,110,86,.3);color:#8AC890;}
+.badge-founding{background:rgba(201,160,64,.15);color:var(--gold);}
+.badge-amount{background:rgba(192,68,42,.2);color:#E07070;}
+.empty-state{text-align:center;padding:48px 24px;color:rgba(255,255,255,.25);font-style:italic;font-size:14px;}
+
+/* ── SETUP GUIDE ── */
+.setup-section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px;margin-bottom:32px;}
+.setup-section h3{font-size:16px;font-weight:600;color:white;margin-bottom:6px;}
+.setup-section .ss-sub{font-size:13px;color:rgba(255,255,255,.35);margin-bottom:24px;}
+.setup-steps{display:flex;flex-direction:column;gap:0;}
+.setup-step{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--line);}
+.setup-step:last-child{border-bottom:none;}
+.ss-num{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;flex-shrink:0;}
+.ss-body{}
+.ss-title{font-size:13px;font-weight:500;color:white;margin-bottom:4px;}
+.ss-desc{font-size:12.5px;color:rgba(255,255,255,.35);line-height:1.6;}
+.ss-desc code{background:rgba(255,255,255,.07);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11.5px;color:rgba(255,255,255,.6);}
+.code-block{background:#0A0806;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:16px;margin-top:8px;font-family:monospace;font-size:11.5px;color:rgba(255,255,255,.55);line-height:1.7;overflow-x:auto;white-space:pre;}
+.url-input-wrap{display:flex;gap:10px;margin-top:8px;}
+.url-input-wrap input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;color:white;outline:none;}
+.url-input-wrap input:focus{border-color:var(--gold);}
+.url-input-wrap input::placeholder{color:rgba(255,255,255,.2);}
+
+/* ── FILTERS ── */
+.filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-btn{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);color:rgba(255,255,255,.4);padding:7px 16px;border-radius:100px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;}
+.filter-btn.active,.filter-btn:hover{border-color:var(--red);color:var(--red);}
+
+/* ── NOTIFICATION SETTINGS ── */
+.notif-section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px;margin-bottom:32px;}
+.notif-section h3{font-size:16px;font-weight:600;color:white;margin-bottom:6px;}
+.notif-section .ns-sub{font-size:13px;color:rgba(255,255,255,.35);margin-bottom:20px;}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--line);}
+.notif-row:last-child{border-bottom:none;}
+.notif-info .ni-title{font-size:14px;color:rgba(255,255,255,.8);}
+.notif-info .ni-desc{font-size:12px;color:rgba(255,255,255,.3);margin-top:2px;}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,.1);border-radius:100px;cursor:pointer;transition:.3s;}
+.toggle input:checked+.toggle-slider{background:var(--red);}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s;}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px);}
+.notify-email-input{display:flex;gap:10px;margin-top:16px;}
+.notify-email-input input{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:10px 14px;font-size:13px;color:white;font-family:'DM Sans',sans-serif;outline:none;}
+.notify-email-input input::placeholder{color:rgba(255,255,255,.2);}
+.notify-email-input input:focus{border-color:var(--red);}
+
+@media(max-width:900px){.layout{flex-direction:column;}.sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:16px;}.sb-nav{flex-direction:row;}.sb-bottom{margin:0;padding:0;border:none;}.main{padding:20px;}.stats-grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <span>Letter<b>Match</b></span><br>
+    <span class="badge">Admin</span>
+  </div>
+  <div class="sb-section">Dashboard</div>
+  <nav class="sb-nav">
+    <a href="#overview" class="active"><span class="sb-icon">📊</span>Overview</a>
+    <a href="#waitlist-section"><span class="sb-icon">📬</span>Waitlist</a>
+    <a href="#payments-section"><span class="sb-icon">💳</span>Payments</a>
+    <a href="#setup-section"><span class="sb-icon">⚙️</span>Setup</a>
+    <a href="#notifications-section"><span class="sb-icon">🔔</span>Notifications</a>
+  </nav>
+  <div class="sb-bottom">
+    <a href="index.html" class="sb-back">← View site</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HEADER -->
+  <div class="page-header" id="overview">
+    <div>
+      <h1>Dashboard</h1>
+      <p id="last-refresh-label">Loading data…</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="loadData()">↻ Refresh</button>
+      <button class="btn btn-gold" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <p class="sc-label">Waitlist signups</p>
+      <p class="sc-value" id="s-waitlist">—</p>
+      <p class="sc-sub">Total emails collected</p>
+      <p class="sc-trend" id="s-waitlist-today">↑ Loading…</p>
+    </div>
+    <div class="stat-card">
+      <p class="sc-label">Founding payments</p>
+      <p class="sc-value" id="s-founding">—</p>
+      <p class="sc-sub">of 50 spots claimed</p>
+    </div>
+    <div class="stat-card">
+      <p class="sc-label">Revenue raised</p>
+      <p class="sc-value" id="s-revenue">$—</p>
+      <p class="sc-sub">Total contributions</p>
+    </div>
+    <div class="stat-card">
+      <p class="sc-label">Spots remaining</p>
+      <p class="sc-value" id="s-spots">—</p>
+      <p class="sc-sub">Founding Member slots</p>
+    </div>
+  </div>
+
+  <!-- FOUNDING SPOTS BAR -->
+  <div class="progress-card">
+    <div class="pc-top">
+      <span class="pc-title">Founding Member spots claimed</span>
+      <span class="pc-pct" id="s-pct">0%</span>
+    </div>
+    <div class="pc-bar"><div class="pc-fill" id="s-fill" style="width:0%"></div></div>
+    <div class="pc-labels"><span id="s-fill-label">0 claimed</span><span>50 total</span></div>
+  </div>
+
+  <!-- SETUP SECTION -->
+  <div class="setup-section" id="setup-section">
+    <h3>⚙️ Google Sheets Setup</h3>
+    <p class="ss-sub">Connect your Google Sheet to save all waitlist and payment data in real time. Takes about 5 minutes.</p>
+
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="ss-num">1</div>
+        <div class="ss-body">
+          <p class="ss-title">Create a Google Sheet</p>
+          <p class="ss-desc">Go to <code>sheets.google.com</code> → create a new spreadsheet → name it <code>LetterMatch Waitlist</code>. Leave it empty — the script will add headers automatically.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">2</div>
+        <div class="ss-body">
+          <p class="ss-title">Open Apps Script</p>
+          <p class="ss-desc">In your Google Sheet, go to <code>Extensions → Apps Script</code>. Delete any existing code, then paste the script below:</p>
+          <div class="code-block">function doPost(e) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet();
+  const data = JSON.parse(e.postData.contents);
+
+  // Select sheet tab based on type
+  const tabName = data.type === 'founding' ? 'Payments' : 'Waitlist';
+  let tab = sheet.getSheetByName(tabName);
+
+  if (!tab) {
+    tab = sheet.insertSheet(tabName);
+    if (tabName === 'Waitlist') {
+      tab.appendRow(['Timestamp','Email','Question','Answer']);
+    } else {
+      tab.appendRow(['Timestamp','Email','Name','Amount','Tier','OrderID']);
+    }
+  }
+
+  if (tabName === 'Waitlist') {
+    tab.appendRow([data.timestamp, data.email, data.question, data.answer]);
+  } else {
+    tab.appendRow([data.timestamp, data.email, data.name, data.amount, data.tier, data.orderId]);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet(e) {
+  if (e.parameter.action !== 'stats') {
+    return ContentService.createTextOutput('{}');
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const wl = ss.getSheetByName('Waitlist');
+  const pm = ss.getSheetByName('Payments');
+
+  const waitlistCount = wl ? Math.max(0, wl.getLastRow() - 1) : 0;
+  const foundingCount = pm ? Math.max(0, pm.getLastRow() - 1) : 0;
+
+  let revenue = 0;
+  let lastName = 'Ayala';
+  let lastTime = '2h ago';
+
+  if (pm && pm.getLastRow() > 1) {
+    const amounts = pm.getRange(2, 4, pm.getLastRow()-1, 1).getValues();
+    amounts.forEach(r => revenue += parseFloat(r[0]) || 0);
+  }
+
+  if (wl && wl.getLastRow() > 1) {
+    const lastRow = wl.getRange(wl.getLastRow(), 1, 1, 2).getValues()[0];
+    const email = lastRow[1] || '';
+    lastName = email.split('@')[0].split('.')[0];
+    lastName = lastName.charAt(0).toUpperCase() + lastName.slice(1);
+    const ts = new Date(lastRow[0]);
+    const diffMins = Math.floor((new Date() - ts) / 60000);
+    lastTime = diffMins < 60 ? diffMins + 'm ago' : Math.floor(diffMins/60) + 'h ago';
+  }
+
+  const result = {
+    waitlist: waitlistCount,
+    founding: foundingCount,
+    revenue: revenue.toFixed(2),
+    lastName, lastTime
+  };
+
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">3</div>
+        <div class="ss-body">
+          <p class="ss-title">Deploy as Web App</p>
+          <p class="ss-desc">Click <code>Deploy → New deployment</code>. Choose type: <code>Web app</code>. Set "Execute as" → <code>Me</code>. Set "Who has access" → <code>Anyone</code>. Click Deploy → copy the URL.</p>
+        </div>
+      </div>
+      <div class="setup-step">
+        <div class="ss-num">4</div>
+        <div class="ss-body">
+          <p class="ss-title">Paste your URL here & in index.html</p>
+          <p class="ss-desc">Paste your Apps Script deployment URL below to test it, and also replace <code>YOUR_GOOGLE_APPS_SCRIPT_URL_HERE</code> in <code>index.html</code>.</p>
+          <div class="url-input-wrap">
+            <input type="url" id="sheets-url-input" placeholder="https://script.google.com/macros/s/your-id/exec">
+            <button class="btn btn-ghost" onclick="saveAndTestURL()">Test &amp; Save</button>
+          </div>
+          <p id="url-test-result" style="font-size:12px;margin-top:8px;color:rgba(255,255,255,.3);"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="notif-section" id="notifications-section">
+    <h3>🔔 Notifications</h3>
+    <p class="ns-sub">Get notified when someone joins the waitlist or makes a payment. Emails are sent via your Google Apps Script (no extra service needed).</p>
+
+    <div style="margin-bottom:16px;">
+      <p style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:8px;">Notification email address</p>
+      <div class="notify-email-input">
+        <input type="email" id="notif-email" placeholder="ratsc06@gmail.com" value="ratsc06@gmail.com">
+        <button class="btn btn-ghost" onclick="saveNotifSettings()">Save</button>
+      </div>
+    </div>
+
+    <div class="notif-row">
+      <div class="notif-info"><p class="ni-title">New waitlist signup</p><p class="ni-desc">Get notified every time someone joins the waitlist</p></div>
+      <label class="toggle"><input type="checkbox" id="notif-waitlist" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info"><p class="ni-title">New Founding Member payment</p><p class="ni-desc">Get notified every time someone completes a payment</p></div>
+      <label class="toggle"><input type="checkbox" id="notif-payment" checked><span class="toggle-slider"></span></label>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info"><p class="ni-title">Daily summary</p><p class="ni-desc">Receive a daily email summary of signups and revenue</p></div>
+      <label class="toggle"><input type="checkbox" id="notif-daily"><span class="toggle-slider"></span></label>
+    </div>
+    <div class="notif-row">
+      <div class="notif-info"><p class="ni-title">Founding spots milestone</p><p class="ni-desc">Notify when 25 and 50 spots are claimed</p></div>
+      <label class="toggle"><input type="checkbox" id="notif-milestone" checked><span class="toggle-slider"></span></label>
+    </div>
+
+    <p style="font-size:12px;color:rgba(255,255,255,.2);margin-top:16px;font-style:italic;">Note: Notification settings are saved locally in your browser. To add email alerts, add a <code>MailApp.sendEmail()</code> call in your Google Apps Script after each row append.</p>
+  </div>
+
+  <!-- WAITLIST TABLE -->
+  <div class="table-section" id="waitlist-section">
+    <div class="table-header">
+      <h3>Waitlist Entries</h3>
+      <span class="th-count" id="wl-count-label">—</span>
+    </div>
+    <div style="padding:12px 24px;border-bottom:1px solid var(--line);">
+      <div class="filters">
+        <button class="filter-btn active" onclick="filterTable('all',this)">All</button>
+        <button class="filter-btn" onclick="filterTable('waitlist',this)">Waitlist only</button>
+        <button class="filter-btn" onclick="filterTable('founding',this)">Founding only</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date &amp; Time</th>
+            <th>Email</th>
+            <th>Type</th>
+            <th>Question / Answer</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="6" class="empty-state">Connect your Google Sheet to see live data.<br>Until then, demo data is shown below.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYMENTS TABLE -->
+  <div class="table-section" id="payments-section">
+    <div class="table-header">
+      <h3>Founding Member Payments</h3>
+      <span class="th-count" id="pay-count-label">—</span>
+    </div>
+    <div class="table-wrap">
+      <table id="pay-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Tier</th>
+            <th>Amount</th>
+            <th>Order ID</th>
+          </tr>
+        </thead>
+        <tbody id="pay-body">
+          <tr><td colspan="7" class="empty-state">No payments recorded yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<script>
+/* ═══════════ CONFIG ═══════════ */
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyBvJwd04C_aSkh9W9HnZy9xCMu9-QPyXkBZTBmoXDYzPvReNQMsIY9aMTL274qi1keIA/exec';
+let SHEETS_URL = localStorage.getItem('lm_sheets_url') || DEFAULT_SHEETS_URL;
+let notifEmail = localStorage.getItem('lm_notif_email') || 'ratsc06@gmail.com';
+
+// Restore settings
+if (SHEETS_URL) document.getElementById('sheets-url-input').value = SHEETS_URL;
+document.getElementById('notif-email').value = notifEmail;
+
+/* ═══════════ DEMO DATA ═══════════ */
+const DEMO_ENTRIES = [
+  {timestamp:'2026-03-09T10:02:00',email:'ayala.k@gmail.com',type:'waitlist',question:'What is one thing you wish someone had said to you first?',answer:'That it was okay to take my time.'},
+  {timestamp:'2026-03-09T08:45:00',email:'daniel.s@outlook.com',type:'waitlist',question:'What feeling have you been carrying so long it feels like yours?',answer:'A quiet kind of longing.'},
+  {timestamp:'2026-03-08T22:10:00',email:'noa.r@icloud.com',type:'founding',amount:'49',tier:'Founding Member',orderId:'PP-1234ABCD',question:'',answer:''},
+  {timestamp:'2026-03-08T19:34:00',email:'sofia.m@gmail.com',type:'waitlist',question:'Which poem changed the way you saw someone?',answer:'Neruda\'s Tonight I Can Write. It made me call my ex.'},
+  {timestamp:'2026-03-07T14:20:00',email:'james.b@proton.me',type:'founding',amount:'5',tier:'A Coffee',orderId:'PP-5678EFGH',question:'',answer:''},
+  {timestamp:'2026-03-07T09:11:00',email:'aya.v@gmail.com',type:'waitlist',question:'What would you want the first letter you receive to feel like?',answer:'Like someone wrote it just for me.'},
+  {timestamp:'2026-03-06T17:55:00',email:'mike.d@gmail.com',type:'founding',amount:'49',tier:'Founding Member',orderId:'PP-9012IJKL',question:'',answer:''},
+];
+
+/* ═══════════ LOAD DATA ═══════════ */
+async function loadData() {
+  document.getElementById('last-refresh-label').textContent = 'Loading…';
+
+  let stats = null;
+  let entries = [...DEMO_ENTRIES];
+
+  if (SHEETS_URL) {
+    try {
+      const r = await fetch(SHEETS_URL + '?action=stats');
+      stats = await r.json();
+    } catch(e) { stats = null; }
+  }
+
+  // Calculate from demo data if no live data
+  const waitlistEntries = entries.filter(e => e.type === 'waitlist');
+  const paymentEntries = entries.filter(e => e.type === 'founding');
+  const totalWL = stats ? stats.waitlist : waitlistEntries.length;
+  const totalFounding = stats ? stats.founding : paymentEntries.length;
+  const totalRevenue = stats ? parseFloat(stats.revenue||0) : paymentEntries.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  const spotsLeft = Math.max(0, 50 - totalFounding);
+  const pct = Math.min(100, (totalFounding/50)*100).toFixed(0);
+
+  // Update stat cards
+  document.getElementById('s-waitlist').textContent = totalWL.toLocaleString();
+  document.getElementById('s-founding').textContent = totalFounding;
+  document.getElementById('s-revenue').textContent = '$' + totalRevenue.toFixed(2);
+  document.getElementById('s-spots').textContent = spotsLeft;
+  document.getElementById('s-pct').textContent = pct + '%';
+  document.getElementById('s-fill').style.width = pct + '%';
+  document.getElementById('s-fill-label').textContent = totalFounding + ' claimed';
+  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e=>e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
+
+  // Render tables
+  renderWaitlistTable(entries);
+  renderPayTable(paymentEntries);
+
+  document.getElementById('last-refresh-label').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function renderWaitlistTable(entries, filter='all') {
+  const tbody = document.getElementById('table-body');
+  const filtered = filter === 'all' ? entries : entries.filter(e => e.type === filter);
+  document.getElementById('wl-count-label').textContent = filtered.length + ' entries';
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No entries found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((e,i) => `
+    <tr>
+      <td style="color:rgba(255,255,255,.25)">${i+1}</td>
+      <td>${formatDate(e.timestamp)}</td>
+      <td class="td-email">${e.email}</td>
+      <td><span class="badge-type ${e.type === 'founding' ? 'badge-founding' : 'badge-waitlist'}">${e.type === 'founding' ? '✦ Founding' : 'Waitlist'}</span></td>
+      <td class="td-answer">${e.answer ? '"'+e.answer+'"' : '—'}</td>
+      <td>${e.amount ? '<span class="badge-type badge-amount">$'+e.amount+'</span>' : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderPayTable(entries) {
+  const tbody = document.getElementById('pay-body');
+  document.getElementById('pay-count-label').textContent = entries.length + ' payments';
+
+  if (!entries.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No payments yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = entries.map((e,i) => `
+    <tr>
+      <td style="color:rgba(255,255,255,.25)">${i+1}</td>
+      <td>${formatDate(e.timestamp)}</td>
+      <td class="td-email">${e.email}</td>
+      <td>${e.name||'—'}</td>
+      <td>${e.tier||'—'}</td>
+      <td><span class="badge-type badge-amount">$${e.amount}</span></td>
+      <td style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.25)">${e.orderId||'—'}</td>
+    </tr>
+  `).join('');
+}
+
+function filterTable(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderWaitlistTable(DEMO_ENTRIES, type);
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ═══════════ CSV EXPORT ═══════════ */
+function exportCSV() {
+  const rows = [
+    ['Timestamp','Email','Type','Tier','Amount','Order ID','Question','Answer'],
+    ...DEMO_ENTRIES.map(e => [
+      e.timestamp, e.email, e.type, e.tier||'', e.amount||'', e.orderId||'',
+      (e.question||'').replace(/"/g,'""'), (e.answer||'').replace(/"/g,'""')
+    ])
+  ];
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lettermatch-data-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ═══════════ SETUP ═══════════ */
+async function saveAndTestURL() {
+  const url = document.getElementById('sheets-url-input').value.trim();
+  const result = document.getElementById('url-test-result');
+
+  if (!url.startsWith('https://script.google.com/')) {
+    result.textContent = '❌ That doesn\'t look like a valid Apps Script URL.';
+    result.style.color = '#E05050';
+    return;
+  }
+
+  result.textContent = '⏳ Testing connection…';
+  result.style.color = 'rgba(255,255,255,.3)';
+
+  try {
+    await fetch(url + '?action=stats');
+    SHEETS_URL = url;
+    localStorage.setItem('lm_sheets_url', url);
+    result.textContent = '✅ Connected! Refresh to see live data. Remember to also update index.html.';
+    result.style.color = '#5A9E6A';
+    loadData();
+  } catch(e) {
+    result.textContent = '⚠️ Could not reach the URL. Make sure your Apps Script is deployed and set to "Anyone" access.';
+    result.style.color = '#E0A050';
+  }
+}
+
+function saveNotifSettings() {
+  const email = document.getElementById('notif-email').value.trim();
+  localStorage.setItem('lm_notif_email', email);
+  alert('Notification settings saved. Add MailApp.sendEmail() to your Apps Script to activate email alerts.');
+}
+
+/* ═══════════ INIT ═══════════ */
+loadData();
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>

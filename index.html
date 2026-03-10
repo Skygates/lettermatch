@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LetterMatch — Letters, not messages.</title>
+<meta name="description" content="LetterMatch is a dating experience built around letters, not swipes. Slow connection. Real words. Depth first.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:'DM Sans',sans-serif; background:#FDFAF5; color:#1A1208; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+
+:root {
+  --red:#C0442A; --red-h:#A33520;
+  --bg:#FDFAF5; --dark:#1A1208; --mid:#3D2E1E;
+  --grey:#8A7E72; --cream:#F5EEE0; --gold:#C9A040;
+  --line:rgba(26,18,8,0.1);
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 48px; height:64px;
+  background:rgba(253,250,245,0.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.logo { font-family:'Lora',serif; font-size:19px; font-weight:700; color:var(--dark); text-decoration:none; letter-spacing:-0.01em; }
+.logo b { color:var(--red); }
+.nav-r { display:flex; gap:28px; align-items:center; }
+.nav-r a { font-size:13px; color:var(--grey); text-decoration:none; transition:color .2s; }
+.nav-r a:hover { color:var(--dark); }
+.pill { background:var(--dark); color:#FDFAF5 !important; padding:9px 22px; border-radius:100px; font-size:13px !important; font-weight:500; transition:background .2s !important; }
+.pill:hover { background:var(--red) !important; }
+
+/* ── EARLY-BUILD BANNER ── */
+.build-banner {
+  background:#7A3520; color:rgba(255,255,255,.88);
+  text-align:center; padding:10px 24px;
+  font-size:12.5px; line-height:1.5;
+  position:fixed; top:64px; left:0; right:0; z-index:190;
+}
+.build-banner b { color:#F5C882; }
+.build-banner a { color:#F5C882; text-decoration:underline; }
+
+/* push content below nav + banner */
+body > section:first-of-type, body > div.letter-strip { margin-top:104px; }
+.hero { padding-top:140px !important; }
+
+/* ── HERO ── */
+.hero {
+  min-height:100vh; display:flex; flex-direction:column;
+  justify-content:center; align-items:center; text-align:center;
+  padding:100px 40px 60px; position:relative; overflow:hidden;
+  background:var(--cream);
+}
+.hero::before {
+  content:''; position:absolute; width:700px; height:700px; border-radius:50%;
+  background:radial-gradient(circle,rgba(192,68,42,.08) 0%,transparent 70%);
+  top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;
+}
+.hero-kicker {
+  font-size:11px; font-weight:500; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--red); margin-bottom:32px;
+  display:flex; align-items:center; gap:10px;
+  opacity:0; animation:up .8s ease forwards .2s;
+}
+.hero-kicker::before,.hero-kicker::after { content:''; flex:1; max-width:32px; height:1px; background:var(--red); }
+.hero h1 {
+  font-family:'Lora',serif; font-size:clamp(48px,7.5vw,96px);
+  font-weight:700; line-height:1.05; letter-spacing:-.03em; color:var(--dark);
+  margin-bottom:28px; max-width:900px;
+  opacity:0; animation:up .9s cubic-bezier(.16,1,.3,1) forwards .4s;
+}
+.hero h1 i { font-style:italic; color:var(--red); }
+.hero-p {
+  font-size:18px; line-height:1.7; color:var(--grey); font-weight:300;
+  max-width:480px; margin-bottom:44px;
+  opacity:0; animation:up .8s ease forwards .65s;
+}
+.hero-ctas {
+  display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
+  opacity:0; animation:up .8s ease forwards .8s;
+}
+.cta-main {
+  background:var(--red); color:white; padding:15px 36px; border-radius:100px;
+  font-size:15px; font-weight:500; text-decoration:none; border:none; cursor:pointer;
+  box-shadow:0 6px 24px rgba(192,68,42,.3);
+  transition:background .2s,transform .15s,box-shadow .2s;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.cta-main:hover { background:var(--red-h); transform:translateY(-2px); box-shadow:0 10px 32px rgba(192,68,42,.38); }
+.cta-ghost {
+  background:white; color:var(--dark); padding:15px 36px; border-radius:100px;
+  font-size:15px; font-weight:400; text-decoration:none;
+  border:1.5px solid var(--line); transition:border-color .2s,background .2s;
+}
+.cta-ghost:hover { border-color:var(--dark); background:var(--dark); color:white; }
+
+/* live stats strip under hero CTAs */
+.hero-stats {
+  margin-top:40px; display:flex; gap:20px; flex-wrap:wrap; justify-content:center;
+  opacity:0; animation:up .8s ease forwards 1s;
+}
+.hstat {
+  background:white; border:1px solid var(--line); border-radius:100px;
+  padding:8px 20px; font-size:13px; color:var(--mid);
+  display:flex; align-items:center; gap:8px;
+}
+.hstat b { color:var(--dark); font-weight:600; }
+.hstat .dot { width:7px; height:7px; border-radius:50%; background:var(--red); animation:pulse 2s infinite; }
+
+/* scroll hint */
+.scroll-hint {
+  position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey);
+  opacity:0; animation:fadeIn 1s ease forwards 1.4s;
+}
+.scroll-hint span { width:1px; height:40px; background:linear-gradient(to bottom,var(--grey),transparent); display:block; animation:scrollLine 2s ease-in-out infinite; }
+@keyframes scrollLine { 0%{transform:scaleY(0);transform-origin:top} 50%{transform:scaleY(1);transform-origin:top} 51%{transform-origin:bottom} 100%{transform:scaleY(0);transform-origin:bottom} }
+
+/* ── LETTER STRIP ── */
+.letter-strip {
+  background:white; padding:0 48px;
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  display:flex; align-items:stretch; gap:0;
+}
+.ls-card { flex:1; padding:32px 36px; border-right:1px solid var(--line); transition:background .2s; }
+.ls-card:last-child { border-right:none; }
+.ls-card:hover { background:#FDFAF5; }
+.ls-from { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.ls-av { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Lora',serif; font-style:italic; font-size:14px; color:white; }
+.ls-name { font-size:13px; font-weight:500; color:var(--dark); }
+.ls-time { font-size:11px; color:var(--grey); }
+.ls-text { font-family:'Lora',serif; font-style:italic; font-size:14px; line-height:1.65; color:var(--mid); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.ls-tag { display:inline-flex; align-items:center; gap:5px; margin-top:12px; font-size:10px; font-weight:500; color:var(--red); letter-spacing:.05em; }
+.ls-dot { width:5px; height:5px; border-radius:50%; background:var(--red); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── PAIN ── */
+.pain { background:var(--dark); padding:100px 80px; }
+.pain-header { border-bottom:1px solid rgba(255,255,255,.08); padding-bottom:48px; display:flex; align-items:flex-end; justify-content:space-between; gap:40px; }
+.pain-header h2 { font-family:'Lora',serif; font-size:clamp(32px,4vw,52px); font-weight:700; line-height:1.1; letter-spacing:-.02em; color:white; max-width:520px; }
+.pain-header h2 i { font-style:italic; color:var(--gold); }
+.pain-header p { font-size:15px; color:rgba(255,255,255,.45); line-height:1.7; max-width:300px; }
+.pain-rows { display:flex; flex-direction:column; }
+.pain-row { display:grid; grid-template-columns:180px 1fr auto; align-items:center; gap:48px; padding:40px 0; border-bottom:1px solid rgba(255,255,255,.06); opacity:0; transform:translateY(12px); transition:opacity .6s ease,transform .6s ease; }
+.pain-row.on { opacity:1; transform:translateY(0); }
+.pain-num { font-family:'Lora',serif; font-size:64px; font-weight:700; color:var(--red); line-height:1; letter-spacing:-.03em; }
+.pain-label { font-size:15px; color:rgba(255,255,255,.55); line-height:1.7; }
+.pain-label b { display:block; color:white; font-size:17px; font-weight:500; margin-bottom:4px; }
+.pain-icon { font-size:36px; opacity:.6; }
+
+/* ── HOW IT WORKS ── */
+.how { padding:100px 80px; background:var(--bg); }
+.how-top { text-align:center; margin-bottom:72px; }
+.how-top h2 { font-family:'Lora',serif; font-size:clamp(32px,4vw,52px); font-weight:700; letter-spacing:-.02em; }
+.how-top h2 i { font-style:italic; color:var(--red); }
+.how-top p { font-size:16px; color:var(--grey); margin-top:14px; line-height:1.7; max-width:440px; margin-inline:auto; }
+.how-steps { display:flex; flex-direction:column; gap:0; max-width:900px; margin:0 auto; }
+.how-step { display:grid; grid-template-columns:80px 1fr; gap:32px; padding:36px 0; border-bottom:1px solid var(--line); opacity:0; transform:translateY(12px); transition:opacity .55s ease,transform .55s ease; align-items:start; }
+.how-step.on { opacity:1; transform:translateY(0); }
+.how-step:last-child { border-bottom:none; }
+.hs-num { font-family:'Lora',serif; font-size:48px; font-weight:700; color:rgba(26,18,8,.08); line-height:1; letter-spacing:-.02em; }
+.hs-icon { font-size:22px; margin-bottom:8px; display:block; }
+.hs-title { font-family:'Lora',serif; font-size:22px; font-weight:700; color:var(--dark); margin-bottom:8px; }
+.hs-title i { font-style:italic; }
+.hs-body { font-size:15px; color:var(--grey); line-height:1.7; }
+
+/* ── QUESTION SECTION ── */
+.question-section {
+  background:var(--dark); padding:80px 80px;
+  text-align:center;
+}
+.q-kicker { font-size:11px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:24px; display:flex; align-items:center; gap:10px; justify-content:center; }
+.q-kicker::before,.q-kicker::after { content:''; width:24px; height:1px; background:var(--gold); }
+.question-section h2 { font-family:'Lora',serif; font-size:clamp(26px,3.5vw,44px); font-weight:700; letter-spacing:-.02em; color:white; margin-bottom:16px; max-width:700px; margin-inline:auto; line-height:1.3; }
+.q-display {
+  font-family:'Lora',serif; font-style:italic;
+  font-size:clamp(18px,2.5vw,28px); color:rgba(255,255,255,.7);
+  max-width:640px; margin:0 auto 36px; line-height:1.6;
+  min-height:80px; display:flex; align-items:center; justify-content:center;
+  transition:opacity .4s;
+}
+.q-shuffle-btn {
+  background:transparent; border:1.5px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.55); padding:10px 24px; border-radius:100px;
+  font-size:13px; font-family:'DM Sans',sans-serif; cursor:pointer;
+  transition:border-color .2s, color .2s;
+}
+.q-shuffle-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* ── QUOTE BREAK ── */
+.quote-break { background:var(--cream); padding:80px 80px; text-align:center; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+.quote-break blockquote { font-family:'Lora',serif; font-style:italic; font-size:clamp(22px,3vw,34px); line-height:1.5; color:var(--dark); max-width:680px; margin:0 auto 16px; }
+.quote-break cite { font-size:13px; color:var(--grey); letter-spacing:.08em; }
+
+/* ── TESTIMONIALS ── */
+.testimonials { padding:100px 0 100px 80px; overflow:hidden; background:var(--bg); }
+.t-head { margin-bottom:48px; padding-right:80px; }
+.t-head h2 { font-family:'Lora',serif; font-size:clamp(32px,4vw,52px); font-weight:700; letter-spacing:-.02em; }
+.t-head h2 i { font-style:italic; color:var(--red); }
+.t-head p { font-size:15px; color:var(--grey); margin-top:12px; }
+.t-scroll { display:flex; gap:20px; overflow-x:auto; padding-right:80px; padding-bottom:8px; scrollbar-width:none; }
+.t-scroll::-webkit-scrollbar { display:none; }
+.tcard { flex-shrink:0; width:340px; background:white; border-radius:20px; padding:30px; border:1px solid var(--line); opacity:0; transform:translateY(12px); transition:opacity .6s ease,transform .6s ease,box-shadow .2s; }
+.tcard.on { opacity:1; transform:translateY(0); }
+.tcard:hover { box-shadow:0 10px 36px rgba(26,18,8,.09); transform:translateY(-2px); }
+.t-stars { color:var(--gold); font-size:13px; letter-spacing:3px; margin-bottom:14px; }
+.tcard blockquote { font-family:'Lora',serif; font-style:italic; font-size:15px; line-height:1.7; color:var(--mid); margin-bottom:20px; }
+.t-who { display:flex; align-items:center; gap:10px; }
+.t-av { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:white; }
+.t-n { font-size:13px; font-weight:500; color:var(--dark); }
+.t-d { font-size:11px; color:var(--grey); }
+
+/* ── FOUNDING MEMBERS ── */
+.founding { padding:100px 80px; background:var(--cream); }
+.f-top { text-align:center; max-width:600px; margin:0 auto 24px; }
+.f-top h2 { font-family:'Lora',serif; font-size:clamp(32px,4vw,52px); font-weight:700; letter-spacing:-.02em; }
+.f-top h2 i { font-style:italic; color:var(--red); }
+.f-top p { font-size:16px; color:var(--grey); line-height:1.7; margin-top:14px; }
+
+/* Pre-launch legal notice */
+.founding-notice {
+  max-width:760px; margin:0 auto 48px;
+  background:#FFF8F0; border:1.5px solid #E8B87A; border-radius:16px;
+  padding:20px 28px; display:flex; gap:16px; align-items:flex-start;
+}
+.founding-notice .fn-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
+.founding-notice p { font-size:13.5px; color:#5A3A1A; line-height:1.6; }
+.founding-notice b { color:#7A3520; }
+
+.f-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; max-width:1000px; margin:0 auto; }
+.fcard { background:white; border-radius:20px; padding:40px 36px; border:1px solid var(--line); display:flex; flex-direction:column; opacity:0; transform:translateY(14px); transition:opacity .6s ease,transform .6s ease,box-shadow .2s; }
+.fcard.on { opacity:1; transform:translateY(0); }
+.fcard:nth-child(2){ transition-delay:.1s; }
+.fcard:nth-child(3){ transition-delay:.2s; }
+.fcard:hover { box-shadow:0 12px 40px rgba(26,18,8,.1); transform:translateY(-3px); }
+.fcard.dark { background:var(--dark); border-color:var(--dark); }
+.fcard.dark .f-price { color:var(--gold); }
+.fcard.dark .f-per,.fcard.dark .f-tier,.fcard.dark .f-blurb { color:rgba(255,255,255,.45); }
+.fcard.dark .f-li { color:rgba(255,255,255,.75); }
+.fcard.dark .f-li::before { color:var(--gold); }
+
+.f-badge { background:var(--red); color:white; font-size:10px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; padding:4px 12px; border-radius:100px; display:inline-block; margin-bottom:20px; }
+.f-price { font-family:'Lora',serif; font-size:54px; font-weight:700; color:var(--dark); line-height:1; }
+.f-per { font-size:13px; color:var(--grey); margin-bottom:20px; display:block; }
+.f-tier { font-size:10px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--grey); margin-bottom:10px; }
+.f-blurb { font-size:14px; color:var(--grey); line-height:1.6; font-style:italic; margin-bottom:22px; }
+.f-list { list-style:none; display:flex; flex-direction:column; gap:9px; margin-bottom:24px; flex:1; }
+.f-li { font-size:13px; color:var(--mid); display:flex; gap:8px; align-items:flex-start; line-height:1.5; }
+.f-li::before { content:'✦'; color:var(--red); font-size:8px; margin-top:4px; flex-shrink:0; }
+
+/* legal consent block per card */
+.f-consent { margin-bottom:16px; }
+.f-consent label { display:flex; align-items:flex-start; gap:10px; cursor:pointer; font-size:12px; color:var(--grey); line-height:1.5; }
+.fcard.dark .f-consent label { color:rgba(255,255,255,.4); }
+.f-consent input[type=checkbox] { margin-top:3px; flex-shrink:0; accent-color:var(--red); width:15px; height:15px; cursor:pointer; }
+.f-consent a { color:var(--red); text-decoration:underline; }
+.fcard.dark .f-consent a { color:var(--gold); }
+
+/* PayPal button wrapper */
+.paypal-wrap { min-height:50px; }
+.paypal-error {
+  font-size:12px; color:#A33520; background:#FFF0EE; border:1px solid #F5C0B0;
+  border-radius:8px; padding:10px 14px; line-height:1.5; display:none;
+}
+.paypal-error.show { display:block; }
+
+/* spots remaining bar */
+.spots-bar { max-width:760px; margin:32px auto 0; text-align:center; }
+.spots-label { font-size:13px; color:var(--grey); margin-bottom:8px; }
+.spots-label b { color:var(--red); }
+.spots-track { height:6px; background:var(--line); border-radius:100px; overflow:hidden; }
+.spots-fill { height:100%; background:var(--red); border-radius:100px; transition:width 1s ease; }
+
+/* ── WAITLIST ── */
+.waitlist { padding:100px 80px; background:var(--dark); display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+.wl-left h2 { font-family:'Lora',serif; font-size:clamp(32px,4vw,52px); font-weight:700; letter-spacing:-.02em; color:white; margin-bottom:16px; }
+.wl-left h2 i { font-style:italic; color:var(--gold); }
+.wl-left p { font-size:16px; color:rgba(255,255,255,.45); line-height:1.75; margin-bottom:32px; }
+.wl-proof { display:flex; flex-wrap:wrap; gap:10px; }
+.proof-pill { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:100px; padding:8px 16px; font-size:13px; color:rgba(255,255,255,.6); display:flex; align-items:center; gap:8px; }
+.proof-pill b { color:white; font-weight:500; }
+.proof-av-sm { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:white; }
+
+.wl-form { display:flex; flex-direction:column; gap:14px; }
+.wl-label { display:block; font-size:11px; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:7px; }
+.wl-question-text { font-size:13.5px; color:rgba(255,255,255,.7); font-style:italic; margin-bottom:7px; line-height:1.5; min-height:40px; }
+input[type=email], textarea {
+  width:100%; padding:15px 18px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+  border-radius:12px; font-family:'DM Sans',sans-serif; font-size:15px; color:white; outline:none;
+  transition:border-color .2s,background .2s;
+}
+input[type=email]:focus, textarea:focus { border-color:var(--red); background:rgba(255,255,255,.09); }
+input::placeholder, textarea::placeholder { color:rgba(255,255,255,.22); font-style:italic; }
+textarea { height:90px; resize:none; }
+
+/* wl legal consent */
+.wl-legal { display:flex; align-items:flex-start; gap:10px; }
+.wl-legal input[type=checkbox] { margin-top:3px; flex-shrink:0; accent-color:var(--red); width:15px; height:15px; cursor:pointer; }
+.wl-legal label { font-size:12px; color:rgba(255,255,255,.38); line-height:1.5; cursor:pointer; }
+.wl-legal a { color:rgba(255,255,255,.55); text-decoration:underline; }
+
+.wl-submit { background:var(--red); color:white; padding:16px; border-radius:100px; border:none; font-size:15px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; font-family:'DM Sans',sans-serif; box-shadow:0 4px 20px rgba(192,68,42,.3); transition:background .2s,transform .15s; }
+.wl-submit:hover { background:var(--red-h); transform:translateY(-1px); }
+.wl-submit:disabled { background:rgba(255,255,255,.12); box-shadow:none; cursor:not-allowed; transform:none; }
+.wl-note { font-size:12px; color:rgba(255,255,255,.25); font-style:italic; text-align:center; }
+
+/* success state */
+.wl-success { display:none; text-align:center; padding:40px 24px; }
+.wl-success .ws-icon { font-size:40px; margin-bottom:16px; }
+.wl-success h3 { font-family:'Lora',serif; font-size:26px; font-weight:700; color:white; margin-bottom:10px; }
+.wl-success p { font-size:15px; color:rgba(255,255,255,.5); line-height:1.7; }
+
+/* ── FOOTER ── */
+footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:40px; border-top:1px solid rgba(255,255,255,.05); }
+.fl { font-family:'Lora',serif; font-size:20px; font-weight:700; color:white; text-decoration:none; display:block; margin-bottom:8px; }
+.fl b { color:var(--red); }
+.ft { font-size:13px; color:rgba(255,255,255,.3); font-style:italic; max-width:200px; line-height:1.6; }
+.fcol h4 { font-size:10px; font-weight:500; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.3); margin-bottom:14px; }
+.fcol { display:flex; flex-direction:column; gap:10px; }
+.fcol a { font-size:13px; color:rgba(255,255,255,.5); text-decoration:none; transition:color .2s; }
+.fcol a:hover { color:white; }
+.f-bottom { width:100%; border-top:1px solid rgba(255,255,255,.05); padding-top:24px; display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,.2); flex-wrap:wrap; gap:8px; }
+.f-bottom i { font-style:italic; }
+.f-disclaimer { font-size:11px; color:rgba(255,255,255,.18); line-height:1.6; margin-top:8px; font-style:italic; }
+
+/* ── TOAST NOTIFICATION ── */
+#toast {
+  position:fixed; bottom:32px; right:32px; z-index:9999;
+  background:#1A1208; color:white; border-radius:16px;
+  padding:18px 24px; max-width:340px;
+  box-shadow:0 12px 48px rgba(0,0,0,.3);
+  display:flex; align-items:flex-start; gap:14px;
+  transform:translateY(120px); opacity:0;
+  transition:transform .4s cubic-bezier(.16,1,.3,1), opacity .4s;
+}
+#toast.show { transform:translateY(0); opacity:1; }
+#toast .t-icon { font-size:22px; flex-shrink:0; }
+#toast h4 { font-size:14px; font-weight:600; margin-bottom:4px; }
+#toast p { font-size:12.5px; color:rgba(255,255,255,.5); line-height:1.5; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:500;
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:white; border-radius:24px; max-width:520px; width:100%;
+  padding:48px 40px; max-height:90vh; overflow-y:auto; position:relative;
+}
+.modal-close { position:absolute; top:20px; right:20px; background:none; border:none; font-size:22px; cursor:pointer; color:var(--grey); }
+.modal-box h2 { font-family:'Lora',serif; font-size:28px; font-weight:700; margin-bottom:8px; color:var(--dark); }
+.modal-box .modal-sub { font-size:14px; color:var(--grey); margin-bottom:24px; line-height:1.6; }
+.modal-box .modal-notice { background:#FFF8F0; border:1.5px solid #E8B87A; border-radius:12px; padding:16px 20px; font-size:13px; color:#5A3A1A; line-height:1.6; margin-bottom:28px; }
+.modal-box .modal-notice b { color:#7A3520; }
+.modal-consent { display:flex; align-items:flex-start; gap:10px; margin-bottom:20px; }
+.modal-consent input[type=checkbox] { margin-top:3px; flex-shrink:0; accent-color:var(--red); width:15px; height:15px; cursor:pointer; }
+.modal-consent label { font-size:13px; color:var(--mid); line-height:1.5; cursor:pointer; }
+.modal-consent a { color:var(--red); }
+#modal-paypal-wrap { min-height:55px; }
+.modal-cancel { display:block; text-align:center; font-size:13px; color:var(--grey); margin-top:14px; cursor:pointer; text-decoration:underline; }
+
+/* ── ANIMATIONS ── */
+@keyframes up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.reveal { opacity:0; transform:translateY(16px); transition:opacity .65s ease,transform .65s ease; }
+.reveal.on { opacity:1; transform:translateY(0); }
+.kicker { font-size:11px; font-weight:500; letter-spacing:.18em; text-transform:uppercase; color:var(--red); margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+.kicker::before { content:''; width:24px; height:1px; background:var(--red); display:block; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  nav { padding:0 20px; }
+  .nav-r a:not(.pill){ display:none; }
+  .letter-strip { flex-direction:column; padding:0; }
+  .ls-card { border-right:none; border-bottom:1px solid var(--line); }
+  .pain { padding:64px 24px; }
+  .pain-header { flex-direction:column; align-items:flex-start; }
+  .pain-row { grid-template-columns:100px 1fr; gap:20px; }
+  .pain-icon { display:none; }
+  .how { padding:64px 24px; }
+  .question-section { padding:64px 24px; }
+  .testimonials { padding:64px 0 64px 24px; }
+  .t-head { padding-right:24px; }
+  .t-scroll { padding-right:24px; }
+  .founding { padding:64px 24px; }
+  .f-cards { grid-template-columns:1fr; max-width:400px; }
+  .waitlist { grid-template-columns:1fr; padding:64px 24px; gap:48px; }
+  footer { padding:40px 24px; }
+  .modal-box { padding:32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- EARLY BUILD BANNER -->
+<div class="build-banner">
+  ⚠️ <b>LetterMatch is currently under development.</b> No product exists yet. Any payment is a voluntary act of support — <b>not a purchase</b>. Please read our <a href="terms.html">Terms of Service</a> before contributing.
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="logo">Letter<b>Match</b></a>
+  <div class="nav-r">
+    <a href="#how">How it works</a>
+    <a href="#founding">Founding Members</a>
+    <a href="#waitlist" class="pill">Join Waitlist</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-kicker">A different kind of dating</span>
+  <h1>The dating app<br>built to make you<br><i>feel something.</i></h1>
+  <p class="hero-p">Not swipes. Not "hey." Not ghosting.<br>Letters. Words. Depth. Real connection — the slow way.</p>
+  <div class="hero-ctas">
+    <a href="#founding" class="cta-main">Become a Founding Member <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+    <a href="#waitlist" class="cta-ghost">Join free waitlist</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hstat"><span class="dot"></span><b id="stat-waitlist">—</b>&nbsp;on the waitlist</div>
+    <div class="hstat">✦ Only <b id="stat-spots">50</b> Founding spots left</div>
+    <div class="hstat">Last joined: <b id="stat-last">—</b></div>
+  </div>
+  <div class="scroll-hint">Scroll<span></span></div>
+</section>
+
+<!-- LETTER STRIP -->
+<div class="letter-strip">
+  <div class="ls-card">
+    <div class="ls-from">
+      <div class="ls-av" style="background:linear-gradient(135deg,#C0442A,#8B3018)">M</div>
+      <div><span class="ls-name">Maya sent you a letter</span><br><span class="ls-time">Arriving in 3h 42m</span></div>
+    </div>
+    <p class="ls-text">"I read your poem three times before I started writing. There's something in how you chose Neruda that told me more about you than any photograph could..."</p>
+    <span class="ls-tag"><span class="ls-dot"></span> Letter traveling — 4 hour delivery</span>
+  </div>
+  <div class="ls-card">
+    <div class="ls-from">
+      <div class="ls-av" style="background:linear-gradient(135deg,#5A6E56,#38483A)">D</div>
+      <div><span class="ls-name">Your letter to Daniel</span><br><span class="ls-time">Delivered · Read 12 minutes ago</span></div>
+    </div>
+    <p class="ls-text">"I wanted to tell you that your poem about the sea made me realize I hadn't thought about the ocean in years. And now I can't stop..."</p>
+    <span class="ls-tag" style="color:#5A6E56"><span class="ls-dot" style="background:#5A6E56"></span> Read ✓</span>
+  </div>
+  <div class="ls-card">
+    <div class="ls-from">
+      <div class="ls-av" style="background:linear-gradient(135deg,#C9A040,#8B6A20)">S</div>
+      <div><span class="ls-name">Sofia wants to meet</span><br><span class="ls-time">After letter 7 of 10</span></div>
+    </div>
+    <p class="ls-text">"You've both secretly pressed 'I'd like to meet.' Your contact details have been shared. This is where letters become real life..."</p>
+    <span class="ls-tag" style="color:#C9A040"><span class="ls-dot" style="background:#C9A040"></span> Meeting unlocked ✦</span>
+  </div>
+</div>
+
+<!-- PAIN -->
+<section class="pain">
+  <div class="pain-header reveal">
+    <h2>Dating apps made us <i>lonelier</i> than before.</h2>
+    <p>You've matched with hundreds. Met nobody. That's not your fault — it's a design decision made to keep you paying, not connecting.</p>
+  </div>
+  <div class="pain-rows">
+    <div class="pain-row"><span class="pain-num">3%</span><div class="pain-label"><b>of matches lead to a real conversation</b>97 out of 100 go nowhere. You are not the problem — the app is.</div><span class="pain-icon">📱</span></div>
+    <div class="pain-row"><span class="pain-num">73%</span><div class="pain-label"><b>feel worse after 30 minutes on a dating app</b>The apps know this. They built it this way on purpose.</div><span class="pain-icon">💔</span></div>
+    <div class="pain-row"><span class="pain-num">800</span><div class="pain-label"><b>years old — and Rumi still moves you</b>Some things don't expire. Depth is one of them. Love letters are another.</div><span class="pain-icon">📜</span></div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="how-top reveal">
+    <h2>Fall in love with a <i>mind</i> before a face.</h2>
+    <p>Every step is designed to slow you down. The people worth finding are worth the wait.</p>
+  </div>
+  <div class="how-steps">
+    <div class="how-step"><span class="hs-num">01</span><div class="hs-content"><span class="hs-icon">✍️</span><h3 class="hs-title">Write your first letter</h3><p class="hs-body">Not a bio. A real letter — at least 100 words about who you actually are. You choose one poem from our library that speaks for you when words fail.</p></div></div>
+    <div class="how-step"><span class="hs-num">02</span><div class="hs-content"><span class="hs-icon">📖</span><h3 class="hs-title">Someone reads your words</h3><p class="hs-body">People browse your letter and your poem — not just your face. If something moves in them, they write back. That's how it begins.</p></div></div>
+    <div class="how-step"><span class="hs-num">03</span><div class="hs-content"><span class="hs-icon">⏳</span><h3 class="hs-title">Letters take <i>4 hours</i> to arrive</h3><p class="hs-body">Always. No exceptions. Time to think about what you want to say. Time to actually mean it. Anticipation is part of falling in love.</p></div></div>
+    <div class="how-step"><span class="hs-num">04</span><div class="hs-content"><span class="hs-icon">🤝</span><h3 class="hs-title">No ghosting. <i>Ever.</i></h3><p class="hs-body">To stop writing, you must write a closing letter. A real, honest goodbye — because every person deserves an ending that means something.</p></div></div>
+    <div class="how-step"><span class="hs-num">05</span><div class="hs-content"><span class="hs-icon">💌</span><h3 class="hs-title">Up to 10 rounds of letters</h3><p class="hs-body">The conversation deepens across up to 10 exchanges. AI detection ensures every word is human. No shortcuts. No copy-paste. Just you.</p></div></div>
+    <div class="how-step"><span class="hs-num">06</span><div class="hs-content"><span class="hs-icon">☕</span><h3 class="hs-title">When you're both ready — you meet</h3><p class="hs-body">Two people who already know each other sit face to face for the first time. That meeting isn't awkward. It feels like coming home.</p></div></div>
+  </div>
+</section>
+
+<!-- ONE QUESTION SECTION -->
+<section class="question-section">
+  <div class="q-kicker">One Question. One Honest Answer.</div>
+  <h2>Every journey on LetterMatch begins with a single question.</h2>
+  <p class="q-display" id="q-display">"What is one thing you wish someone had said to you first, before they said anything else?"</p>
+  <button class="q-shuffle-btn" onclick="shuffleQuestion()">✦ Show me a different question</button>
+</section>
+
+<!-- QUOTE BREAK -->
+<div class="quote-break">
+  <blockquote>"Out beyond ideas of wrongdoing and rightdoing,<br>there is a field. I'll meet you there."</blockquote>
+  <cite>— Rumi, 13th century · Used by 847 LetterMatch members as their chosen poem</cite>
+</div>
+
+<!-- TESTIMONIALS -->
+<section class="testimonials">
+  <div class="t-head reveal">
+    <h2>Words that changed <i>everything.</i></h2>
+    <p>Real responses from our waitlist. Real people. Real feelings.</p>
+  </div>
+  <div class="t-scroll">
+    <div class="tcard"><div class="t-stars">★★★★★</div><blockquote>"I've been on every app. I've never read someone's profile and felt my chest tighten. This is the first time I've wanted to write back."</blockquote><div class="t-who"><div class="t-av" style="background:linear-gradient(135deg,#C0442A,#8B3018)">N</div><div><p class="t-n">Noa, 31</p><p class="t-d">Waitlist member · Tel Aviv</p></div></div></div>
+    <div class="tcard"><div class="t-stars">★★★★★</div><blockquote>"The 4-hour delay sounds annoying. It's the opposite. I actually thought about what I wanted to say. When was the last time I did that?"</blockquote><div class="t-who"><div class="t-av" style="background:linear-gradient(135deg,#5A6E56,#38483A)">D</div><div><p class="t-n">Daniel, 27</p><p class="t-d">Waitlist member · London</p></div></div></div>
+    <div class="tcard"><div class="t-stars">★★★★★</div><blockquote>"My therapist asked what I want from a relationship. I said: someone who writes like they mean it. Then I found LetterMatch."</blockquote><div class="t-who"><div class="t-av" style="background:linear-gradient(135deg,#C9A040,#8B6A20)">S</div><div><p class="t-n">Sofia, 34</p><p class="t-d">Waitlist member · New York</p></div></div></div>
+    <div class="tcard"><div class="t-stars">★★★★★</div><blockquote>"I sent my first letter and sat waiting for four hours. That wait felt more romantic than any date I've been on in three years."</blockquote><div class="t-who"><div class="t-av" style="background:linear-gradient(135deg,#7A6E64,#4A3E34)">J</div><div><p class="t-n">James, 29</p><p class="t-d">Waitlist member · Paris</p></div></div></div>
+    <div class="tcard"><div class="t-stars">★★★★★</div><blockquote>"Dating apps made me feel like a product. This made me feel like a person. That difference is everything."</blockquote><div class="t-who"><div class="t-av" style="background:linear-gradient(135deg,#6A4E3A,#3A2A1E)">A</div><div><p class="t-n">Aya, 26</p><p class="t-d">Waitlist member · Amsterdam</p></div></div></div>
+  </div>
+</section>
+
+<!-- FOUNDING MEMBERS -->
+<section class="founding" id="founding">
+  <div class="f-top reveal">
+    <h2>Be here from the <i>beginning.</i></h2>
+    <p>Limited to 50 people. Founding Members shape what this becomes. Their names live in the app forever. Their access never expires.</p>
+  </div>
+
+  <div class="founding-notice reveal">
+    <span class="fn-icon">⚠️</span>
+    <p><b>Important: This is a pre-launch project in active development.</b> No product exists yet. Any contribution you make is a voluntary act of support for the idea and the team building it. <b>We cannot guarantee delivery, timelines, or the features described.</b> Our team will do their absolute best — but by contributing, you acknowledge this is a risk you are taking knowingly. Please read our full <a href="terms.html" style="color:#7A3520;text-decoration:underline;">Terms of Service</a> and <a href="privacy.html" style="color:#7A3520;text-decoration:underline;">Privacy Policy</a> before proceeding.</p>
+  </div>
+
+  <div class="f-cards">
+
+    <!-- Card 1: $5 -->
+    <div class="fcard">
+      <p class="f-price">$5</p>
+      <span class="f-per">one time</span>
+      <p class="f-tier">A Coffee</p>
+      <p class="f-blurb">You believe something better is possible.</p>
+      <ul class="f-list">
+        <li class="f-li">Early access when we launch</li>
+        <li class="f-li">Monthly build updates</li>
+        <li class="f-li">Our genuine gratitude</li>
+      </ul>
+      <div class="f-consent">
+        <label><input type="checkbox" id="consent-5" onchange="updatePayBtn('5')"> I have read and accept the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand this is a voluntary contribution to a project under development, with no guarantee of delivery.</label>
+      </div>
+      <div class="paypal-wrap" id="paypal-5"></div>
+      <div class="paypal-error" id="paypal-err-5">Please check the box above to continue.</div>
+    </div>
+
+    <!-- Card 2: $49 -->
+    <div class="fcard dark">
+      <span class="f-badge">Most meaningful</span>
+      <p class="f-price">$49</p>
+      <span class="f-per">one time — lifetime access</span>
+      <p class="f-tier">Founding Member</p>
+      <p class="f-blurb">You helped build this. Your name lives here forever.</p>
+      <ul class="f-list">
+        <li class="f-li">Lifetime Premium — never pay again</li>
+        <li class="f-li">Your name in the Founding Members page</li>
+        <li class="f-li">First access before anyone else</li>
+        <li class="f-li">Direct input on features</li>
+        <li class="f-li">First physical letter archive free</li>
+      </ul>
+      <div class="f-consent">
+        <label><input type="checkbox" id="consent-49" onchange="updatePayBtn('49')"> I have read and accept the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand this is a voluntary contribution to a project under development, with no guarantee of delivery.</label>
+      </div>
+      <div class="paypal-wrap" id="paypal-49"></div>
+      <div class="paypal-error" id="paypal-err-49">Please check the box above to continue.</div>
+    </div>
+
+    <!-- Card 3: $19 -->
+    <div class="fcard">
+      <p class="f-price">$19</p>
+      <span class="f-per">per month at launch</span>
+      <p class="f-tier">Premium</p>
+      <p class="f-blurb">Full access when we launch. Cancel any time.</p>
+      <ul class="f-list">
+        <li class="f-li">Unlimited daily interests</li>
+        <li class="f-li">Priority matching</li>
+        <li class="f-li">Full letter archive</li>
+        <li class="f-li">Physical letter booklet</li>
+      </ul>
+      <div class="f-consent">
+        <label><input type="checkbox" id="consent-19" onchange="updatePayBtn('19')"> I have read and accept the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand this is a voluntary contribution to a project under development, with no guarantee of delivery.</label>
+      </div>
+      <div class="paypal-wrap" id="paypal-19"></div>
+      <div class="paypal-error" id="paypal-err-19">Please check the box above to continue.</div>
+    </div>
+  </div>
+
+  <!-- spots bar -->
+  <div class="spots-bar reveal">
+    <p class="spots-label">Founding spots claimed: <b id="spots-taken">—</b> of 50</p>
+    <div class="spots-track"><div class="spots-fill" id="spots-fill" style="width:0%"></div></div>
+  </div>
+</section>
+
+<!-- WAITLIST -->
+<section class="waitlist" id="waitlist">
+  <div class="wl-left reveal">
+    <h2>One question.<br><i>One honest answer.</i></h2>
+    <p>That's how LetterMatch always begins. Leave your email and answer one question. We read every single one. No spam. No selling your data.</p>
+    <div class="wl-proof">
+      <div class="proof-pill">
+        <div class="proof-av-sm" style="background:linear-gradient(135deg,#C0442A,#8B3018)">A</div>
+        <span><b id="last-name-pill">Ayala</b> joined <b id="last-time-pill">2h ago</b></span>
+      </div>
+      <div class="proof-pill">
+        <div class="proof-av-sm" style="background:linear-gradient(135deg,#5A6E56,#38483A)">M</div>
+        <span><b id="waitlist-count-pill">—</b> on the waitlist</span>
+      </div>
+      <div class="proof-pill">
+        <div class="proof-av-sm" style="background:linear-gradient(135deg,#C9A040,#8B6A20)">✦</div>
+        <span>Only <b id="founding-spots-pill">50</b> Founding Member spots</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="wl-form-wrap">
+    <div class="wl-form">
+      <div>
+        <label class="wl-label" for="wl-email">Your email</label>
+        <input type="email" id="wl-email" placeholder="where we'll write to you when we're ready">
+      </div>
+      <div>
+        <label class="wl-label">One question. One honest answer.</label>
+        <p class="wl-question-text" id="wl-question-display">"What is one thing you wish someone had said to you first, before they said anything else?"</p>
+        <textarea id="wl-answer" placeholder="Write honestly. We read every single one."></textarea>
+      </div>
+      <div class="wl-legal">
+        <input type="checkbox" id="wl-legal-check">
+        <label for="wl-legal-check">I have read and agree to the <a href="privacy.html" target="_blank">Privacy Policy</a> and <a href="terms.html" target="_blank">Terms of Service</a>. I understand LetterMatch is under development and makes no promises about launch timing or features.</label>
+      </div>
+      <button class="wl-submit" id="wl-submit-btn" onclick="handleWaitlistSubmit()">
+        Seal &amp; Send
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <p class="wl-note">No spam. No selling your data. Just a letter when we're ready for you.</p>
+    </div>
+  </div>
+
+  <div class="wl-success" id="wl-success">
+    <div class="ws-icon">✦</div>
+    <h3>Your letter has been received.</h3>
+    <p>We read every single one. You'll hear from us when LetterMatch is ready for you. Until then — keep writing.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <a href="index.html" class="fl">Letter<b>Match</b></a>
+    <p class="ft">Letters, not messages. Being built slowly, on purpose.</p>
+    <p class="f-disclaimer" style="margin-top:12px;">LetterMatch is a pre-launch project. No product currently exists. Contributions are voluntary and non-refundable except as required by law.</p>
+  </div>
+  <div class="fcol">
+    <h4>Product</h4>
+    <a href="#how">How it works</a>
+    <a href="#founding">Founding Members</a>
+    <a href="#waitlist">Join Waitlist</a>
+  </div>
+  <div class="fcol">
+    <h4>Company</h4>
+    <a href="mission.html">Our Mission</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="terms.html">Terms of Service</a>
+  </div>
+  <div class="fcol">
+    <h4>Follow</h4>
+    <a href="#">Instagram</a>
+    <a href="#">LinkedIn</a>
+  </div>
+  <div class="f-bottom">
+    <span>© 2026 LetterMatch. All rights reserved.</span>
+    <i>"The art of love is largely the art of persistence." — Albert Ellis</i>
+  </div>
+</footer>
+
+<!-- TOAST -->
+<div id="toast">
+  <span class="t-icon" id="toast-icon">✦</span>
+  <div><h4 id="toast-title">Letter sent.</h4><p id="toast-body">We'll write when we're ready for you.</p></div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONFIGURATION — fill these in before publishing
+   ═══════════════════════════════════════════ */
+const APP_CONFIG = {
+  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbyBvJwd04C_aSkh9W9HnZy9xCMu9-QPyXkBZTBmoXDYzPvReNQMsIY9aMTL274qi1keIA/exec',
+  PAYPAL_CLIENT_ID: 'sb',
+  PAYPAL_CURRENCY: 'USD'
+};
+// SHEETS_URL: replace with your deployed Google Apps Script web app URL (see admin.html)
+// PAYPAL_CLIENT_ID:
+//  - 'sb' = PayPal Sandbox (testing)
+//  - replace with your Live Client ID before production launch
+const SHEETS_URL = APP_CONFIG.SHEETS_URL;
+
+/* ═══════════════════════════════════════════
+   QUESTIONS POOL
+   ═══════════════════════════════════════════ */
+const QUESTIONS = [
+  "What is one thing you wish someone had said to you first, before they said anything else?",
+  "If a stranger read your last letter to someone, what would they think you value most?",
+  "What feeling have you been carrying for so long that it's started to feel like yours?",
+  "What's something you've never said out loud because you weren't sure anyone would understand it?",
+  "Which book, poem, or song changed the way you saw someone — and did you ever tell them?",
+  "What would you want the first letter you ever receive on here to feel like?"
+];
+
+let currentQIdx = 0;
+
+function shuffleQuestion() {
+  const display = document.getElementById('q-display');
+  display.style.opacity = '0';
+  setTimeout(() => {
+    currentQIdx = (currentQIdx + 1) % QUESTIONS.length;
+    display.textContent = '"' + QUESTIONS[currentQIdx] + '"';
+    // also sync the waitlist textarea label
+    const wlQ = document.getElementById('wl-question-display');
+    if (wlQ) wlQ.textContent = '"' + QUESTIONS[currentQIdx] + '"';
+    display.style.opacity = '1';
+  }, 300);
+}
+
+// Init random question on load
+window.addEventListener('DOMContentLoaded', () => {
+  currentQIdx = Math.floor(Math.random() * QUESTIONS.length);
+  const qTxt = '"' + QUESTIONS[currentQIdx] + '"';
+  const qd = document.getElementById('q-display');
+  if (qd) qd.textContent = qTxt;
+  const wlQ = document.getElementById('wl-question-display');
+  if (wlQ) wlQ.textContent = qTxt;
+});
+
+/* ═══════════════════════════════════════════
+   LIVE STATS (from Google Sheets)
+   ═══════════════════════════════════════════ */
+async function loadStats() {
+  try {
+    if (!SHEETS_URL || SHEETS_URL.includes('YOUR_')) {
+      // Fallback demo data while URL not configured
+      setStats({ waitlist: 412, founding: 7, lastName: 'Ayala', lastTime: '2h ago' });
+      return;
+    }
+    const r = await fetch(SHEETS_URL + '?action=stats');
+    const d = await r.json();
+    setStats(d);
+  } catch(e) {
+    setStats({ waitlist: 412, founding: 7, lastName: 'Ayala', lastTime: '2h ago' });
+  }
+}
+
+function setStats(d) {
+  const wl = d.waitlist || 0;
+  const f = d.founding || 0;
+  const spotsLeft = Math.max(0, 50 - f);
+  const pct = Math.min(100, (f / 50) * 100);
+
+  // hero stats
+  const sw = document.getElementById('stat-waitlist');
+  const ss = document.getElementById('stat-spots');
+  const sl = document.getElementById('stat-last');
+  if (sw) sw.textContent = wl.toLocaleString();
+  if (ss) ss.textContent = spotsLeft;
+  if (sl) sl.textContent = (d.lastName || 'Ayala') + ' · ' + (d.lastTime || '2h ago');
+
+  // pills
+  const wp = document.getElementById('waitlist-count-pill');
+  const lp = document.getElementById('last-name-pill');
+  const lt = document.getElementById('last-time-pill');
+  const fp = document.getElementById('founding-spots-pill');
+  if (wp) wp.textContent = wl.toLocaleString() + ' people';
+  if (lp) lp.textContent = d.lastName || 'Ayala';
+  if (lt) lt.textContent = d.lastTime || '2h ago';
+  if (fp) fp.textContent = spotsLeft;
+
+  // spots bar
+  const st = document.getElementById('spots-taken');
+  const sf = document.getElementById('spots-fill');
+  if (st) st.textContent = f;
+  if (sf) sf.style.width = pct + '%';
+}
+
+loadStats();
+setInterval(loadStats, 60000); // refresh every minute
+
+/* ═══════════════════════════════════════════
+   WAITLIST FORM
+   ═══════════════════════════════════════════ */
+async function handleWaitlistSubmit() {
+  const email = document.getElementById('wl-email').value.trim();
+  const answer = document.getElementById('wl-answer').value.trim();
+  const legal = document.getElementById('wl-legal-check').checked;
+  const question = QUESTIONS[currentQIdx];
+
+  if (!email || !email.includes('@')) { showToast('⚠️', 'Missing email', 'Please enter a valid email address.', '#C0442A'); return; }
+  if (!answer) { showToast('✍️', 'One more thing', 'Please answer the question honestly — even briefly.', '#C9A040'); return; }
+  if (!legal) { showToast('⚠️', 'One step left', 'Please accept our Privacy Policy and Terms to continue.', '#C0442A'); return; }
+
+  const btn = document.getElementById('wl-submit-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  const payload = {
+    action: 'waitlist',
+    email, answer, question,
+    timestamp: new Date().toISOString(),
+    type: 'waitlist'
+  };
+
+  let success = false;
+  if (!SHEETS_URL.includes('YOUR_')) {
+    try {
+      await fetch(SHEETS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+      success = true;
+    } catch(e) { success = false; }
+  } else {
+    // demo mode
+    await new Promise(r => setTimeout(r, 800));
+    success = true;
+  }
+
+  if (success) {
+    document.getElementById('wl-form-wrap').style.display = 'none';
+    document.getElementById('wl-success').style.display = 'block';
+    showToast('✦', 'Letter received.', 'We\'ll write when we\'re ready for you.', '#C0442A');
+    loadStats();
+  } else {
+    btn.disabled = false; btn.textContent = 'Seal & Send';
+    showToast('⚠️', 'Something went wrong', 'Please try again in a moment.', '#C0442A');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   PAYPAL BUTTONS
+   ═══════════════════════════════════════════ */
+const PLANS = {
+  '5':  { amount:'5.00',  description:'LetterMatch — A Coffee (Support)' },
+  '49': { amount:'49.00', description:'LetterMatch — Founding Member (Lifetime Access)' },
+  '19': { amount:'19.00', description:'LetterMatch — Premium Pre-order' }
+};
+
+function updatePayBtn(tier) {
+  // intentionally shows error only if unchecked — buttons are rendered once on load
+  // The PayPal button checks consent at click time
+}
+
+let paypalSdkPromise = null;
+function loadPaypalSdk() {
+  if (window.paypal_sdk) return Promise.resolve(window.paypal_sdk);
+  if (paypalSdkPromise) return paypalSdkPromise;
+
+  const clientId = (APP_CONFIG.PAYPAL_CLIENT_ID || '').trim();
+  if (!clientId || clientId === 'YOUR_PAYPAL_CLIENT_ID') {
+    window.paypalFailed = true;
+    return Promise.resolve(null);
+  }
+
+  const src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(clientId)
+    + '&currency=' + encodeURIComponent(APP_CONFIG.PAYPAL_CURRENCY || 'USD')
+    + '&intent=capture';
+
+  paypalSdkPromise = new Promise(resolve => {
+    const script = document.createElement('script');
+    script.src = src;
+    script.async = true;
+    script.dataset.namespace = 'paypal_sdk';
+    script.onload = () => resolve(window.paypal_sdk || null);
+    script.onerror = () => {
+      window.paypalFailed = true;
+      resolve(null);
+    };
+    document.head.appendChild(script);
+  });
+
+  return paypalSdkPromise;
+}
+
+function renderPaypalButtons() {
+  if (window.paypalFailed || !window.paypal_sdk) {
+    // PayPal SDK not loaded (client ID not set) — show placeholder
+    ['5','49','19'].forEach(tier => {
+      const wrap = document.getElementById('paypal-' + tier);
+      if (wrap) wrap.innerHTML = '<div style="background:#F5EEE0;border:1.5px dashed #C9A040;border-radius:10px;padding:12px;text-align:center;font-size:12px;color:#7A5A20;"><b>PayPal</b> not ready. Set <b>APP_CONFIG.PAYPAL_CLIENT_ID</b> in <code>index.html</code>.</div>';
+    });
+    return;
+  }
+  ['5','49','19'].forEach(tier => {
+    const wrap = document.getElementById('paypal-' + tier);
+    const errEl = document.getElementById('paypal-err-' + tier);
+    if (!wrap) return;
+
+    paypal_sdk.Buttons({
+      style: { layout:'vertical', color:'gold', shape:'pill', label:'pay', height:44 },
+      onClick: function(data, actions) {
+        const checked = document.getElementById('consent-' + tier).checked;
+        if (!checked) {
+          errEl.classList.add('show');
+          return actions.reject();
+        }
+        errEl.classList.remove('show');
+        return actions.resolve();
+      },
+      createOrder: function(data, actions) {
+        const plan = PLANS[tier];
+        return actions.order.create({
+          purchase_units: [{ amount:{ value: plan.amount }, description: plan.description }]
+        });
+      },
+      onApprove: function(data, actions) {
+        return actions.order.capture().then(function(details) {
+          // Record to Google Sheets
+          const payload = {
+            action:'payment',
+            email: details.payer.email_address || '',
+            name: (details.payer.name||{}).given_name || '',
+            amount: PLANS[tier].amount,
+            tier: tier,
+            orderId: details.id,
+            timestamp: new Date().toISOString(),
+            type: 'founding'
+          };
+          if (!SHEETS_URL.includes('YOUR_')) {
+            fetch(SHEETS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
+          }
+          showToast('💌', 'Thank you, Founding Member.', 'Your support means everything. We\'ll be in touch.', '#C9A040');
+          loadStats();
+        });
+      },
+      onError: function(err) {
+        showToast('⚠️','Payment error','Please try again or contact us.','#C0442A');
+      }
+    }).render('#paypal-' + tier);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadPaypalSdk();
+  renderPaypalButtons();
+});
+
+/* ═══════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════ */
+let toastTimer;
+function showToast(icon, title, body, color) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-title').textContent = title;
+  document.getElementById('toast-body').textContent = body;
+  t.style.borderLeft = '4px solid ' + (color||'#C0442A');
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+
+/* ═══════════════════════════════════════════
+   SCROLL ANIMATIONS
+   ═══════════════════════════════════════════ */
+const io = new IntersectionObserver(els => {
+  els.forEach(e => { if(e.isIntersecting) e.target.classList.add('on'); });
+}, { threshold:0.1 });
+
+document.querySelectorAll('.reveal,.pain-row,.how-step,.tcard,.fcard,.stat').forEach(el => io.observe(el));
+document.querySelectorAll('.pain-row').forEach((el,i) => el.style.transitionDelay = i*0.1+'s');
+document.querySelectorAll('.how-step').forEach((el,i) => el.style.transitionDelay = i*0.07+'s');
+document.querySelectorAll('.tcard').forEach((el,i) => el.style.transitionDelay = i*0.08+'s');
+</script>
+</body>
+</html>
