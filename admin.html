@@ -450,7 +450,7 @@ function doGet(e) {
 
 <script>
 /* ═══════════ CONFIG ═══════════ */
-const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyBvJwd04C_aSkh9W9HnZy9xCMu9-QPyXkBZTBmoXDYzPvReNQMsIY9aMTL274qi1keIA/exec';
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwLhQQ5ptF7vHM0Y__uBvFE6V8eQL3oQ2aZW62nqf_10gZzg5ZmkOtCK-vsnhdVvqvLwQ/exec';
 let SHEETS_URL = localStorage.getItem('lm_sheets_url') || DEFAULT_SHEETS_URL;
 let notifEmail = localStorage.getItem('lm_notif_email') || 'ratsc06@gmail.com';
 let currentEntries = [];
@@ -519,30 +519,50 @@ async function loadData() {
   let stats = null;
   let entries = [];
   let payments = [];
+  let syncMode = 'default';
+  const candidateUrls = [...new Set([SHEETS_URL, DEFAULT_SHEETS_URL].filter(Boolean))];
 
-  if (SHEETS_URL) {
-    try {
-      const dashboard = await fetchJson(SHEETS_URL + '?action=dashboard');
-      stats = dashboard.stats || null;
-      entries = Array.isArray(dashboard.entries) ? dashboard.entries : [];
-      payments = Array.isArray(dashboard.payments) ? dashboard.payments : [];
-      setSyncStatus('Live sync active.', 'success');
-    } catch (dashboardError) {
+  if (candidateUrls.length) {
+    for (const candidateUrl of candidateUrls) {
       try {
-        stats = await fetchJson(SHEETS_URL + '?action=stats');
-        entries = [];
-        payments = [];
-        setSyncStatus('Stats are live, but the dashboard feed is missing. Update the Apps Script code below and redeploy.', 'warn');
-      } catch (statsError) {
-        entries = [];
-        payments = [];
-        setSyncStatus('Google Sheets sync failed. Fix the Apps Script deployment, then refresh.', 'error');
+        const dashboard = await fetchJson(candidateUrl + '?action=dashboard');
+        stats = dashboard.stats || null;
+        entries = Array.isArray(dashboard.entries) ? dashboard.entries : [];
+        payments = Array.isArray(dashboard.payments) ? dashboard.payments : [];
+        SHEETS_URL = candidateUrl;
+        localStorage.setItem('lm_sheets_url', candidateUrl);
+        document.getElementById('sheets-url-input').value = candidateUrl;
+        syncMode = 'live';
+        break;
+      } catch (dashboardError) {
+        try {
+          stats = await fetchJson(candidateUrl + '?action=stats');
+          entries = [];
+          payments = [];
+          SHEETS_URL = candidateUrl;
+          localStorage.setItem('lm_sheets_url', candidateUrl);
+          document.getElementById('sheets-url-input').value = candidateUrl;
+          syncMode = 'stats-only';
+          break;
+        } catch (statsError) {
+          stats = null;
+          entries = [];
+          payments = [];
+        }
       }
     }
-  } else {
+  }
+
+  if (syncMode === 'default' && !candidateUrls.length) {
     entries = [...DEMO_ENTRIES];
     payments = entries.filter(e => e.type === 'founding');
     setSyncStatus('No Apps Script URL set. Showing demo data only.', 'warn');
+  } else if (syncMode === 'live') {
+    setSyncStatus('Live sync active.', 'success');
+  } else if (syncMode === 'stats-only') {
+    setSyncStatus('Stats are live, but this deployment is missing action=dashboard. Paste the full Apps Script from the setup section and redeploy.', 'warn');
+  } else {
+    setSyncStatus('Google Sheets sync failed. This Apps Script deployment is not serving the expected API yet.', 'error');
   }
 
   currentEntries = entries;
@@ -562,7 +582,7 @@ async function loadData() {
   document.getElementById('s-pct').textContent = pct + '%';
   document.getElementById('s-fill').style.width = pct + '%';
   document.getElementById('s-fill-label').textContent = totalFounding + ' claimed';
-  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e => e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
+  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e=>e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
 
   renderWaitlistTable(currentEntries, currentFilter);
   renderPayTable(currentPayments);
@@ -694,7 +714,7 @@ setInterval(loadData, 60000);
   document.getElementById('s-pct').textContent = pct + '%';
   document.getElementById('s-fill').style.width = pct + '%';
   document.getElementById('s-fill-label').textContent = totalFounding + ' claimed';
-  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e => e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
+  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e=>e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
 
   renderWaitlistTable(currentEntries, currentFilter);
   renderPayTable(currentPayments);
@@ -783,23 +803,28 @@ async function saveAndTestURL() {
   const result = document.getElementById('url-test-result');
 
   if (!url.startsWith('https://script.google.com/')) {
-    result.textContent = '❌ That doesn\'t look like a valid Apps Script URL.';
+    result.textContent = 'That does not look like a valid Apps Script URL.';
     result.style.color = '#E05050';
     return;
   }
 
-  result.textContent = '⏳ Testing connection…';
+  result.textContent = 'Testing connection…';
   result.style.color = 'rgba(255,255,255,.3)';
 
   try {
-    await fetch(url + '?action=stats');
+    const dashboard = await fetchJson(url + '?action=dashboard');
     SHEETS_URL = url;
     localStorage.setItem('lm_sheets_url', url);
-    result.textContent = '✅ Connected! Refresh to see live data. Remember to also update index.html.';
-    result.style.color = '#5A9E6A';
+    if (dashboard && Array.isArray(dashboard.entries)) {
+      result.textContent = 'Connected. Live dashboard sync is available.';
+      result.style.color = '#5A9E6A';
+    } else {
+      result.textContent = 'Connected, but the Apps Script dashboard payload is incomplete. Update the setup code and redeploy.';
+      result.style.color = '#E0A050';
+    }
     loadData();
   } catch(e) {
-    result.textContent = '⚠️ Could not reach the URL. Make sure your Apps Script is deployed and set to "Anyone" access.';
+    result.textContent = 'Could not validate the URL. Make sure Apps Script is deployed as a Web App and that action=dashboard returns JSON.';
     result.style.color = '#E0A050';
   }
 }
