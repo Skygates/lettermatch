@@ -153,6 +153,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div>
       <h1>Dashboard</h1>
       <p id="last-refresh-label">Loading data…</p>
+      <p id="sync-status" style="font-size:12px;color:rgba(255,255,255,.35);margin-top:6px;">Connecting to Google Sheets…</p>
     </div>
     <div class="header-actions">
       <button class="btn btn-ghost" onclick="loadData()">↻ Refresh</button>
@@ -213,72 +214,121 @@ tr:hover td{background:rgba(255,255,255,.02);}
         <div class="ss-body">
           <p class="ss-title">Open Apps Script</p>
           <p class="ss-desc">In your Google Sheet, go to <code>Extensions → Apps Script</code>. Delete any existing code, then paste the script below:</p>
-          <div class="code-block">function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet();
-  const data = JSON.parse(e.postData.contents);
-
-  // Select sheet tab based on type
-  const tabName = data.type === 'founding' ? 'Payments' : 'Waitlist';
-  let tab = sheet.getSheetByName(tabName);
-
-  if (!tab) {
-    tab = sheet.insertSheet(tabName);
-    if (tabName === 'Waitlist') {
-      tab.appendRow(['Timestamp','Email','Question','Answer']);
-    } else {
-      tab.appendRow(['Timestamp','Email','Name','Amount','Tier','OrderID']);
-    }
-  }
-
-  if (tabName === 'Waitlist') {
-    tab.appendRow([data.timestamp, data.email, data.question, data.answer]);
-  } else {
-    tab.appendRow([data.timestamp, data.email, data.name, data.amount, data.tier, data.orderId]);
-  }
-
-  return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
+          <div class="code-block">function jsonResponse_(payload) {
+  return ContentService.createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function doGet(e) {
-  if (e.parameter.action !== 'stats') {
-    return ContentService.createTextOutput('{}');
+function getOrCreateTab_(ss, name, headers) {
+  var tab = ss.getSheetByName(name);
+  if (!tab) {
+    tab = ss.insertSheet(name);
+    tab.appendRow(headers);
   }
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const wl = ss.getSheetByName('Waitlist');
-  const pm = ss.getSheetByName('Payments');
+  return tab;
+}
 
-  const waitlistCount = wl ? Math.max(0, wl.getLastRow() - 1) : 0;
-  const foundingCount = pm ? Math.max(0, pm.getLastRow() - 1) : 0;
+function getWaitlistRows_(tab) {
+  if (!tab || tab.getLastRow() <= 1) return [];
+  return tab.getRange(2, 1, tab.getLastRow() - 1, 4).getValues().map(function(row) {
+    return {
+      timestamp: row[0],
+      email: row[1],
+      question: row[2],
+      answer: row[3],
+      type: 'waitlist'
+    };
+  });
+}
 
-  let revenue = 0;
-  let lastName = 'Ayala';
-  let lastTime = '2h ago';
+function getPaymentRows_(tab) {
+  if (!tab || tab.getLastRow() <= 1) return [];
+  return tab.getRange(2, 1, tab.getLastRow() - 1, 6).getValues().map(function(row) {
+    return {
+      timestamp: row[0],
+      email: row[1],
+      name: row[2],
+      amount: String(row[3] || ''),
+      tier: row[4],
+      orderId: row[5],
+      type: 'founding'
+    };
+  });
+}
 
-  if (pm && pm.getLastRow() > 1) {
-    const amounts = pm.getRange(2, 4, pm.getLastRow()-1, 1).getValues();
-    amounts.forEach(r => revenue += parseFloat(r[0]) || 0);
+function sortNewestFirst_(rows) {
+  return rows.sort(function(a, b) {
+    return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+  });
+}
+
+function buildStats_(waitlistRows, paymentRows) {
+  var revenue = paymentRows.reduce(function(sum, row) {
+    return sum + (parseFloat(row.amount) || 0);
+  }, 0);
+
+  var lastName = '—';
+  var lastTime = '—';
+  if (waitlistRows.length) {
+    var latest = sortNewestFirst_(waitlistRows.slice())[0];
+    var email = String(latest.email || '');
+    var localPart = email.split('@')[0].split('.')[0];
+    lastName = localPart ? localPart.charAt(0).toUpperCase() + localPart.slice(1) : '—';
+    var diffMins = Math.floor((new Date() - new Date(latest.timestamp)) / 60000);
+    lastTime = diffMins < 60 ? diffMins + 'm ago' : Math.floor(diffMins / 60) + 'h ago';
   }
 
-  if (wl && wl.getLastRow() > 1) {
-    const lastRow = wl.getRange(wl.getLastRow(), 1, 1, 2).getValues()[0];
-    const email = lastRow[1] || '';
-    lastName = email.split('@')[0].split('.')[0];
-    lastName = lastName.charAt(0).toUpperCase() + lastName.slice(1);
-    const ts = new Date(lastRow[0]);
-    const diffMins = Math.floor((new Date() - ts) / 60000);
-    lastTime = diffMins < 60 ? diffMins + 'm ago' : Math.floor(diffMins/60) + 'h ago';
-  }
-
-  const result = {
-    waitlist: waitlistCount,
-    founding: foundingCount,
+  return {
+    waitlist: waitlistRows.length,
+    founding: paymentRows.length,
     revenue: revenue.toFixed(2),
-    lastName, lastTime
+    lastName: lastName,
+    lastTime: lastTime
   };
+}
 
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
+function doPost(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var data = JSON.parse(e.postData.contents || '{}');
+  var isFounding = data.type === 'founding';
+  var tab = getOrCreateTab_(
+    ss,
+    isFounding ? 'Payments' : 'Waitlist',
+    isFounding
+      ? ['Timestamp','Email','Name','Amount','Tier','OrderID']
+      : ['Timestamp','Email','Question','Answer']
+  );
+
+  if (isFounding) {
+    tab.appendRow([data.timestamp, data.email, data.name, data.amount, data.tier, data.orderId]);
+  } else {
+    tab.appendRow([data.timestamp, data.email, data.question, data.answer]);
+  }
+
+  return jsonResponse_({ status:'ok' });
+}
+
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) || 'stats';
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var waitlistRows = sortNewestFirst_(getWaitlistRows_(ss.getSheetByName('Waitlist')));
+  var paymentRows = sortNewestFirst_(getPaymentRows_(ss.getSheetByName('Payments')));
+  var stats = buildStats_(waitlistRows, paymentRows);
+
+  if (action === 'dashboard') {
+    return jsonResponse_({
+      status: 'ok',
+      stats: stats,
+      entries: sortNewestFirst_(waitlistRows.concat(paymentRows)),
+      payments: paymentRows
+    });
+  }
+
+  if (action === 'stats') {
+    return jsonResponse_(stats);
+  }
+
+  return jsonResponse_({ status:'ok' });
 }</div>
         </div>
       </div>
@@ -363,7 +413,7 @@ function doGet(e) {
           </tr>
         </thead>
         <tbody id="table-body">
-          <tr><td colspan="6" class="empty-state">Connect your Google Sheet to see live data.<br>Until then, demo data is shown below.</td></tr>
+          <tr><td colspan="6" class="empty-state">Connect your Google Sheet to see live waitlist and payment data.</td></tr>
         </tbody>
       </table>
     </div>
@@ -403,6 +453,9 @@ function doGet(e) {
 const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyBvJwd04C_aSkh9W9HnZy9xCMu9-QPyXkBZTBmoXDYzPvReNQMsIY9aMTL274qi1keIA/exec';
 let SHEETS_URL = localStorage.getItem('lm_sheets_url') || DEFAULT_SHEETS_URL;
 let notifEmail = localStorage.getItem('lm_notif_email') || 'ratsc06@gmail.com';
+let currentEntries = [];
+let currentPayments = [];
+let currentFilter = 'all';
 
 // Restore settings
 if (SHEETS_URL) document.getElementById('sheets-url-input').value = SHEETS_URL;
@@ -419,30 +472,89 @@ const DEMO_ENTRIES = [
   {timestamp:'2026-03-06T17:55:00',email:'mike.d@gmail.com',type:'founding',amount:'49',tier:'Founding Member',orderId:'PP-9012IJKL',question:'',answer:''},
 ];
 
+function setSyncStatus(message, tone) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const colors = {
+    muted: 'rgba(255,255,255,.35)',
+    success: '#8AC890',
+    warn: '#E0A050',
+    error: '#E07070'
+  };
+  el.textContent = message;
+  el.style.color = colors[tone] || colors.muted;
+}
+
+async function fetchJson(url, options) {
+  const response = await fetch(url, options);
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error('HTTP ' + response.status);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error('Invalid JSON response');
+  }
+}
+
+function computeStatsFromEntries(entries, payments, fallbackStats) {
+  if (fallbackStats) return fallbackStats;
+
+  const waitlistEntries = entries.filter(e => e.type === 'waitlist');
+  const paymentEntries = payments.length ? payments : entries.filter(e => e.type === 'founding');
+  const totalRevenue = paymentEntries.reduce((sum, entry) => sum + (parseFloat(entry.amount || 0) || 0), 0);
+  return {
+    waitlist: waitlistEntries.length,
+    founding: paymentEntries.length,
+    revenue: totalRevenue.toFixed(2)
+  };
+}
+
 /* ═══════════ LOAD DATA ═══════════ */
 async function loadData() {
   document.getElementById('last-refresh-label').textContent = 'Loading…';
+  setSyncStatus('Checking Google Sheets sync…', 'muted');
 
   let stats = null;
-  let entries = [...DEMO_ENTRIES];
+  let entries = [];
+  let payments = [];
 
   if (SHEETS_URL) {
     try {
-      const r = await fetch(SHEETS_URL + '?action=stats');
-      stats = await r.json();
-    } catch(e) { stats = null; }
+      const dashboard = await fetchJson(SHEETS_URL + '?action=dashboard');
+      stats = dashboard.stats || null;
+      entries = Array.isArray(dashboard.entries) ? dashboard.entries : [];
+      payments = Array.isArray(dashboard.payments) ? dashboard.payments : [];
+      setSyncStatus('Live sync active.', 'success');
+    } catch (dashboardError) {
+      try {
+        stats = await fetchJson(SHEETS_URL + '?action=stats');
+        entries = [];
+        payments = [];
+        setSyncStatus('Stats are live, but the dashboard feed is missing. Update the Apps Script code below and redeploy.', 'warn');
+      } catch (statsError) {
+        entries = [];
+        payments = [];
+        setSyncStatus('Google Sheets sync failed. Fix the Apps Script deployment, then refresh.', 'error');
+      }
+    }
+  } else {
+    entries = [...DEMO_ENTRIES];
+    payments = entries.filter(e => e.type === 'founding');
+    setSyncStatus('No Apps Script URL set. Showing demo data only.', 'warn');
   }
 
-  // Calculate from demo data if no live data
-  const waitlistEntries = entries.filter(e => e.type === 'waitlist');
-  const paymentEntries = entries.filter(e => e.type === 'founding');
-  const totalWL = stats ? stats.waitlist : waitlistEntries.length;
-  const totalFounding = stats ? stats.founding : paymentEntries.length;
-  const totalRevenue = stats ? parseFloat(stats.revenue||0) : paymentEntries.reduce((s,e)=>s+parseFloat(e.amount||0),0);
+  currentEntries = entries;
+  currentPayments = payments.length ? payments : entries.filter(e => e.type === 'founding');
+  const computedStats = computeStatsFromEntries(currentEntries, currentPayments, stats);
+  const waitlistEntries = currentEntries.filter(e => e.type === 'waitlist');
+  const totalWL = computedStats.waitlist || 0;
+  const totalFounding = computedStats.founding || 0;
+  const totalRevenue = parseFloat(computedStats.revenue || 0);
   const spotsLeft = Math.max(0, 50 - totalFounding);
-  const pct = Math.min(100, (totalFounding/50)*100).toFixed(0);
+  const pct = Math.min(100, (totalFounding / 50) * 100).toFixed(0);
 
-  // Update stat cards
   document.getElementById('s-waitlist').textContent = totalWL.toLocaleString();
   document.getElementById('s-founding').textContent = totalFounding;
   document.getElementById('s-revenue').textContent = '$' + totalRevenue.toFixed(2);
@@ -450,11 +562,10 @@ async function loadData() {
   document.getElementById('s-pct').textContent = pct + '%';
   document.getElementById('s-fill').style.width = pct + '%';
   document.getElementById('s-fill-label').textContent = totalFounding + ' claimed';
-  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e=>e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
+  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e => e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
 
-  // Render tables
-  renderWaitlistTable(entries);
-  renderPayTable(paymentEntries);
+  renderWaitlistTable(currentEntries, currentFilter);
+  renderPayTable(currentPayments);
 
   document.getElementById('last-refresh-label').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
 }
@@ -506,7 +617,8 @@ function renderPayTable(entries) {
 function filterTable(type, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  renderWaitlistTable(DEMO_ENTRIES, type);
+  currentFilter = type;
+  renderWaitlistTable(currentEntries, type);
 }
 
 function formatDate(ts) {
@@ -518,7 +630,139 @@ function formatDate(ts) {
 function exportCSV() {
   const rows = [
     ['Timestamp','Email','Type','Tier','Amount','Order ID','Question','Answer'],
-    ...DEMO_ENTRIES.map(e => [
+    ...currentEntries.map(e => [
+      e.timestamp, e.email, e.type, e.tier||'', e.amount||'', e.orderId||'',
+      (e.question||'').replace(/"/g,'""'), (e.answer||'').replace(/"/g,'""')
+    ])
+  ];
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lettermatch-data-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ═══════════ SETUP ═══════════ */
+async function saveAndTestURL() {
+  const url = document.getElementById('sheets-url-input').value.trim();
+  const result = document.getElementById('url-test-result');
+
+  if (!url.startsWith('https://script.google.com/')) {
+    result.textContent = 'That does not look like a valid Apps Script URL.';
+    result.style.color = '#E05050';
+    return;
+  }
+
+  result.textContent = 'Testing connection…';
+  result.style.color = 'rgba(255,255,255,.3)';
+
+  try {
+    const dashboard = await fetchJson(url + '?action=dashboard');
+    SHEETS_URL = url;
+    localStorage.setItem('lm_sheets_url', url);
+    if (dashboard && Array.isArray(dashboard.entries)) {
+      result.textContent = 'Connected. Live dashboard sync is available.';
+      result.style.color = '#5A9E6A';
+    } else {
+      result.textContent = 'Connected, but the Apps Script dashboard payload is incomplete. Update the setup code and redeploy.';
+      result.style.color = '#E0A050';
+    }
+    loadData();
+  } catch(e) {
+    result.textContent = 'Could not validate the URL. Make sure Apps Script is deployed as a Web App and that action=dashboard returns JSON.';
+    result.style.color = '#E0A050';
+  }
+}
+
+function saveNotifSettings() {
+  const email = document.getElementById('notif-email').value.trim();
+  localStorage.setItem('lm_notif_email', email);
+  alert('Notification settings saved. Add MailApp.sendEmail() to your Apps Script to activate email alerts.');
+}
+
+/* ═══════════ INIT ═══════════ */
+loadData();
+setInterval(loadData, 60000);
+</script>
+</body>
+</html>
+ + totalRevenue.toFixed(2);
+  document.getElementById('s-spots').textContent = spotsLeft;
+  document.getElementById('s-pct').textContent = pct + '%';
+  document.getElementById('s-fill').style.width = pct + '%';
+  document.getElementById('s-fill-label').textContent = totalFounding + ' claimed';
+  document.getElementById('s-waitlist-today').textContent = '↑ ' + waitlistEntries.filter(e => e.timestamp.startsWith(new Date().toISOString().slice(0,10))).length + ' today';
+
+  renderWaitlistTable(currentEntries, currentFilter);
+  renderPayTable(currentPayments);
+
+  document.getElementById('last-refresh-label').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+}
+
+function renderWaitlistTable(entries, filter='all') {
+  const tbody = document.getElementById('table-body');
+  const filtered = filter === 'all' ? entries : entries.filter(e => e.type === filter);
+  document.getElementById('wl-count-label').textContent = filtered.length + ' entries';
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No entries found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((e,i) => `
+    <tr>
+      <td style="color:rgba(255,255,255,.25)">${i+1}</td>
+      <td>${formatDate(e.timestamp)}</td>
+      <td class="td-email">${e.email}</td>
+      <td><span class="badge-type ${e.type === 'founding' ? 'badge-founding' : 'badge-waitlist'}">${e.type === 'founding' ? '✦ Founding' : 'Waitlist'}</span></td>
+      <td class="td-answer">${e.answer ? '"'+e.answer+'"' : '—'}</td>
+      <td>${e.amount ? '<span class="badge-type badge-amount">$'+e.amount+'</span>' : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderPayTable(entries) {
+  const tbody = document.getElementById('pay-body');
+  document.getElementById('pay-count-label').textContent = entries.length + ' payments';
+
+  if (!entries.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No payments yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = entries.map((e,i) => `
+    <tr>
+      <td style="color:rgba(255,255,255,.25)">${i+1}</td>
+      <td>${formatDate(e.timestamp)}</td>
+      <td class="td-email">${e.email}</td>
+      <td>${e.name||'—'}</td>
+      <td>${e.tier||'—'}</td>
+      <td><span class="badge-type badge-amount">$${e.amount}</span></td>
+      <td style="font-family:monospace;font-size:11px;color:rgba(255,255,255,.25)">${e.orderId||'—'}</td>
+    </tr>
+  `).join('');
+}
+
+function filterTable(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = type;
+  renderWaitlistTable(currentEntries, type);
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ═══════════ CSV EXPORT ═══════════ */
+function exportCSV() {
+  const rows = [
+    ['Timestamp','Email','Type','Tier','Amount','Order ID','Question','Answer'],
+    ...currentEntries.map(e => [
       e.timestamp, e.email, e.type, e.tier||'', e.amount||'', e.orderId||'',
       (e.question||'').replace(/"/g,'""'), (e.answer||'').replace(/"/g,'""')
     ])

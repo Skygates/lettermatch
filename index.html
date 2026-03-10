@@ -699,6 +699,7 @@ const APP_CONFIG = {
 //  - 'sb' = PayPal Sandbox (testing)
 //  - replace with your Live Client ID before production launch
 const SHEETS_URL = APP_CONFIG.SHEETS_URL;
+const DEMO_STATS = { waitlist: 412, founding: 7, lastName: 'Ayala', lastTime: '2h ago' };
 
 /* ═══════════════════════════════════════════
    QUESTIONS POOL
@@ -737,21 +738,32 @@ window.addEventListener('DOMContentLoaded', () => {
   if (wlQ) wlQ.textContent = qTxt;
 });
 
+async function fetchJson(url, options) {
+  const response = await fetch(url, options);
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error('HTTP ' + response.status);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error('Invalid JSON response');
+  }
+}
+
 /* ═══════════════════════════════════════════
    LIVE STATS (from Google Sheets)
    ═══════════════════════════════════════════ */
 async function loadStats() {
   try {
     if (!SHEETS_URL || SHEETS_URL.includes('YOUR_')) {
-      // Fallback demo data while URL not configured
-      setStats({ waitlist: 412, founding: 7, lastName: 'Ayala', lastTime: '2h ago' });
+      setStats(DEMO_STATS);
       return;
     }
-    const r = await fetch(SHEETS_URL + '?action=stats');
-    const d = await r.json();
+    const d = await fetchJson(SHEETS_URL + '?action=stats');
     setStats(d);
   } catch(e) {
-    setStats({ waitlist: 412, founding: 7, lastName: 'Ayala', lastTime: '2h ago' });
+    setStats({ waitlist: 0, founding: 0, lastName: 'Sync unavailable', lastTime: 'check admin' });
   }
 }
 
@@ -815,11 +827,19 @@ async function handleWaitlistSubmit() {
   let success = false;
   if (!SHEETS_URL.includes('YOUR_')) {
     try {
-      await fetch(SHEETS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-      success = true;
-    } catch(e) { success = false; }
+      const result = await fetchJson(SHEETS_URL, {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Accept':'application/json'
+        },
+        body:JSON.stringify(payload)
+      });
+      success = !!(result && result.status === 'ok');
+    } catch(e) {
+      success = false;
+    }
   } else {
-    // demo mode
     await new Promise(r => setTimeout(r, 800));
     success = true;
   }
@@ -827,11 +847,11 @@ async function handleWaitlistSubmit() {
   if (success) {
     document.getElementById('wl-form-wrap').style.display = 'none';
     document.getElementById('wl-success').style.display = 'block';
-    showToast('✦', 'Letter received.', 'We\'ll write when we\'re ready for you.', '#C0442A');
+    showToast('✦', 'Letter received.', "We'll write when we're ready for you.", '#C0442A');
     loadStats();
   } else {
     btn.disabled = false; btn.textContent = 'Seal & Send';
-    showToast('⚠️', 'Something went wrong', 'Please try again in a moment.', '#C0442A');
+    showToast('⚠️', 'Google Sheet sync failed', 'Your letter was not saved. Fix Apps Script, then try again.', '#C0442A');
   }
 }
 
@@ -925,7 +945,14 @@ function renderPaypalButtons() {
             type: 'founding'
           };
           if (!SHEETS_URL.includes('YOUR_')) {
-            fetch(SHEETS_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) }).catch(()=>{});
+            fetchJson(SHEETS_URL, {
+              method:'POST',
+              headers:{
+                'Content-Type':'application/json',
+                'Accept':'application/json'
+              },
+              body:JSON.stringify(payload)
+            }).catch(() => {});
           }
           showToast('💌', 'Thank you, Founding Member.', 'Your support means everything. We\'ll be in touch.', '#C9A040');
           loadStats();
