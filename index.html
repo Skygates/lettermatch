@@ -751,6 +751,22 @@ async function fetchJson(url, options) {
   }
 }
 
+async function postAppsScriptJson(url, payload) {
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error('HTTP ' + response.status);
+  }
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error('Invalid JSON response');
+  }
+}
+
 /* ═══════════════════════════════════════════
    LIVE STATS (from Google Sheets)
    ═══════════════════════════════════════════ */
@@ -827,14 +843,7 @@ async function handleWaitlistSubmit() {
   let success = false;
   if (!SHEETS_URL.includes('YOUR_')) {
     try {
-      const result = await fetchJson(SHEETS_URL, {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Accept':'application/json'
-        },
-        body:JSON.stringify(payload)
-      });
+      const result = await postAppsScriptJson(SHEETS_URL, payload);
       success = !!(result && result.status === 'ok');
     } catch(e) {
       success = false;
@@ -945,14 +954,7 @@ function renderPaypalButtons() {
             type: 'founding'
           };
           if (!SHEETS_URL.includes('YOUR_')) {
-            fetchJson(SHEETS_URL, {
-              method:'POST',
-              headers:{
-                'Content-Type':'application/json',
-                'Accept':'application/json'
-              },
-              body:JSON.stringify(payload)
-            }).catch(() => {});
+            postAppsScriptJson(SHEETS_URL, payload).catch(() => {});
           }
           showToast('💌', 'Thank you, Founding Member.', 'Your support means everything. We\'ll be in touch.', '#C9A040');
           loadStats();
