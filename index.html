@@ -262,20 +262,13 @@ body > section:first-of-type, body > div.letter-strip { margin-top:104px; }
 .f-consent a { color:var(--red); text-decoration:underline; }
 .fcard.dark .f-consent a { color:var(--gold); }
 
-/* PayPal button wrapper */
+/* action button wrapper */
 .paypal-wrap { min-height:50px; }
 .paypal-error {
   font-size:12px; color:#A33520; background:#FFF0EE; border:1px solid #F5C0B0;
   border-radius:8px; padding:10px 14px; line-height:1.5; display:none;
 }
 .paypal-error.show { display:block; }
-
-/* spots remaining bar */
-.spots-bar { max-width:760px; margin:32px auto 0; text-align:center; }
-.spots-label { font-size:13px; color:var(--grey); margin-bottom:8px; }
-.spots-label b { color:var(--red); }
-.spots-track { height:6px; background:var(--line); border-radius:100px; overflow:hidden; }
-.spots-fill { height:100%; background:var(--red); border-radius:100px; transition:width 1s ease; }
 
 /* ── WAITLIST ── */
 .waitlist { padding:100px 80px; background:var(--dark); display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
@@ -402,7 +395,7 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
 
 <!-- EARLY BUILD BANNER -->
 <div class="build-banner">
-  ⚠️ <b>LetterMatch is currently under development.</b> No product exists yet. Any payment is a voluntary act of support — <b>not a purchase</b>. Please read our <a href="terms.html">Terms of Service</a> before contributing.
+  ⚠️ <b>LetterMatch is currently under development.</b> No app exists yet. Join the waitlist to hear when we are ready.
 </div>
 
 <!-- NAV -->
@@ -410,7 +403,7 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
   <a href="index.html" class="logo">Letter<b>Match</b></a>
   <div class="nav-r">
     <a href="#how">How it works</a>
-    <a href="#founding">Founding Members</a>
+    <a href="mission.html">Mission</a>
     <a href="#waitlist" class="pill">Join Waitlist</a>
   </div>
 </nav>
@@ -421,12 +414,12 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
   <h1>The dating app<br>built to make you<br><i>feel something.</i></h1>
   <p class="hero-p">Not swipes. Not "hey." Not ghosting.<br>Letters. Words. Depth. Real connection — the slow way.</p>
   <div class="hero-ctas">
-    <a href="#founding" class="cta-main">Become a Founding Member <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
-    <a href="#waitlist" class="cta-ghost">Join free waitlist</a>
+    <a href="#waitlist" class="cta-main">Join the Waitlist <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+    <a href="mission.html" class="cta-ghost">Read our mission</a>
   </div>
   <div class="hero-stats">
     <div class="hstat"><span class="dot"></span><b id="stat-waitlist">—</b>&nbsp;on the waitlist</div>
-    <div class="hstat">✦ Only <b id="stat-spots">50</b> Founding spots left</div>
+    <div class="hstat">Every letter is read by a real human</div>
     <div class="hstat">Last joined: <b id="stat-last">—</b></div>
   </div>
   <div class="scroll-hint">Scroll<span></span></div>
@@ -518,86 +511,6 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
   </div>
 </section>
 
-<!-- FOUNDING MEMBERS -->
-<section class="founding" id="founding">
-  <div class="f-top reveal">
-    <h2>Be here from the <i>beginning.</i></h2>
-    <p>Limited to 50 people. Founding Members shape what this becomes. Their names live in the app forever. Their access never expires.</p>
-  </div>
-
-  <div class="founding-notice reveal">
-    <span class="fn-icon">⚠️</span>
-    <p><b>Important: This is a pre-launch project in active development.</b> No product exists yet. Any contribution you make is a voluntary act of support for the idea and the team building it. <b>We cannot guarantee delivery, timelines, or the features described.</b> Our team will do their absolute best — but by contributing, you acknowledge this is a risk you are taking knowingly. Please read our full <a href="terms.html" style="color:#7A3520;text-decoration:underline;">Terms of Service</a> and <a href="privacy.html" style="color:#7A3520;text-decoration:underline;">Privacy Policy</a> before proceeding.</p>
-  </div>
-
-  <div class="f-cards">
-
-    <!-- Card 1: $5 -->
-    <div class="fcard">
-      <p class="f-price">$5</p>
-      <span class="f-per">one time</span>
-      <p class="f-tier">A Coffee</p>
-      <p class="f-blurb">You believe something better is possible.</p>
-      <ul class="f-list">
-        <li class="f-li">Early access when we launch</li>
-        <li class="f-li">Monthly build updates</li>
-        <li class="f-li">Our genuine gratitude</li>
-      </ul>
-      <div class="f-consent">
-        <label><input type="checkbox" id="consent-5" onchange="updatePayBtn('5')"> I have read and accept the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand this is a voluntary contribution to a project under development, with no guarantee of delivery.</label>
-      </div>
-      <div class="paypal-wrap" id="paypal-5"></div>
-      <div class="paypal-error" id="paypal-err-5">Please check the box above to continue.</div>
-    </div>
-
-    <!-- Card 2: $49 -->
-    <div class="fcard dark">
-      <span class="f-badge">Most meaningful</span>
-      <p class="f-price">$49</p>
-      <span class="f-per">one time — lifetime access</span>
-      <p class="f-tier">Founding Member</p>
-      <p class="f-blurb">You helped build this. Your name lives here forever.</p>
-      <ul class="f-list">
-        <li class="f-li">Lifetime Premium — never pay again</li>
-        <li class="f-li">Your name in the Founding Members page</li>
-        <li class="f-li">First access before anyone else</li>
-        <li class="f-li">Direct input on features</li>
-        <li class="f-li">First physical letter archive free</li>
-      </ul>
-      <div class="f-consent">
-        <label><input type="checkbox" id="consent-49" onchange="updatePayBtn('49')"> I have read and accept the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand this is a voluntary contribution to a project under development, with no guarantee of delivery.</label>
-      </div>
-      <div class="paypal-wrap" id="paypal-49"></div>
-      <div class="paypal-error" id="paypal-err-49">Please check the box above to continue.</div>
-    </div>
-
-    <!-- Card 3: $19 -->
-    <div class="fcard">
-      <p class="f-price">$19</p>
-      <span class="f-per">per month at launch</span>
-      <p class="f-tier">Premium</p>
-      <p class="f-blurb">Full access when we launch. Cancel any time.</p>
-      <ul class="f-list">
-        <li class="f-li">Unlimited daily interests</li>
-        <li class="f-li">Priority matching</li>
-        <li class="f-li">Full letter archive</li>
-        <li class="f-li">Physical letter booklet</li>
-      </ul>
-      <div class="f-consent">
-        <label><input type="checkbox" id="consent-19" onchange="updatePayBtn('19')"> I have read and accept the <a href="terms.html" target="_blank">Terms of Service</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>. I understand this is a voluntary contribution to a project under development, with no guarantee of delivery.</label>
-      </div>
-      <div class="paypal-wrap" id="paypal-19"></div>
-      <div class="paypal-error" id="paypal-err-19">Please check the box above to continue.</div>
-    </div>
-  </div>
-
-  <!-- spots bar -->
-  <div class="spots-bar reveal">
-    <p class="spots-label">Founding spots claimed: <b id="spots-taken">—</b> of 50</p>
-    <div class="spots-track"><div class="spots-fill" id="spots-fill" style="width:0%"></div></div>
-  </div>
-</section>
-
 <!-- WAITLIST -->
 <section class="waitlist" id="waitlist">
   <div class="wl-left reveal">
@@ -613,8 +526,8 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
         <span><b id="waitlist-count-pill">—</b> on the waitlist</span>
       </div>
       <div class="proof-pill">
-        <div class="proof-av-sm" style="background:linear-gradient(135deg,#C9A040,#8B6A20)">✦</div>
-        <span>Only <b id="founding-spots-pill">50</b> Founding Member spots</span>
+        <div class="proof-av-sm" style="background:linear-gradient(135deg,#C9A040,#8B6A20)">✓</div>
+        <span>No spam. No selling your data.</span>
       </div>
     </div>
   </div>
@@ -654,13 +567,13 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
   <div>
     <a href="index.html" class="fl">Letter<b>Match</b></a>
     <p class="ft">Letters, not messages. Being built slowly, on purpose.</p>
-    <p class="f-disclaimer" style="margin-top:12px;">LetterMatch is a pre-launch project. No product currently exists. Contributions are voluntary and non-refundable except as required by law.</p>
+    <p class="f-disclaimer" style="margin-top:12px;">LetterMatch is a pre-launch project. No product currently exists. Join the waitlist and we will write when there is something real to share.</p>
   </div>
   <div class="fcol">
     <h4>Product</h4>
     <a href="#how">How it works</a>
-    <a href="#founding">Founding Members</a>
     <a href="#waitlist">Join Waitlist</a>
+    <a href="mission.html">Our Mission</a>
   </div>
   <div class="fcol">
     <h4>Company</h4>
@@ -690,16 +603,11 @@ footer { background:#110E0A; padding:56px 80px; display:flex; justify-content:sp
    CONFIGURATION — fill these in before publishing
    ═══════════════════════════════════════════ */
 const APP_CONFIG = {
-  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbyBJVUMIRvJSOs56zuGu6b10L7KkgzpZRcmj_x5py95p9TKgbxZ1W2dJFYXiSkPHbenPQ/exec',
-  PAYPAL_CLIENT_ID: 'sb',
-  PAYPAL_CURRENCY: 'USD'
+  SHEETS_URL: 'https://script.google.com/macros/s/AKfycbyBJVUMIRvJSOs56zuGu6b10L7KkgzpZRcmj_x5py95p9TKgbxZ1W2dJFYXiSkPHbenPQ/exec'
 };
 // SHEETS_URL: replace with your deployed Google Apps Script web app URL (see admin.html)
-// PAYPAL_CLIENT_ID:
-//  - 'sb' = PayPal Sandbox (testing)
-//  - replace with your Live Client ID before production launch
 const SHEETS_URL = APP_CONFIG.SHEETS_URL;
-const DEMO_STATS = { waitlist: 412, founding: 7, lastName: 'Ayala', lastTime: '2h ago' };
+const DEMO_STATS = { waitlist: 412, lastName: 'Ayala', lastTime: '2h ago' };
 
 /* ═══════════════════════════════════════════
    QUESTIONS POOL
@@ -779,39 +687,24 @@ async function loadStats() {
     const d = await fetchJson(SHEETS_URL + '?action=stats');
     setStats(d);
   } catch(e) {
-    setStats({ waitlist: 0, founding: 0, lastName: 'Sync unavailable', lastTime: 'check admin' });
+    setStats({ waitlist: 0, lastName: 'Sync unavailable', lastTime: 'check admin' });
   }
 }
 
 function setStats(d) {
   const wl = d.waitlist || 0;
-  const f = d.founding || 0;
-  const spotsLeft = Math.max(0, 50 - f);
-  const pct = Math.min(100, (f / 50) * 100);
 
-  // hero stats
   const sw = document.getElementById('stat-waitlist');
-  const ss = document.getElementById('stat-spots');
   const sl = document.getElementById('stat-last');
   if (sw) sw.textContent = wl.toLocaleString();
-  if (ss) ss.textContent = spotsLeft;
   if (sl) sl.textContent = (d.lastName || 'Ayala') + ' · ' + (d.lastTime || '2h ago');
 
-  // pills
   const wp = document.getElementById('waitlist-count-pill');
   const lp = document.getElementById('last-name-pill');
   const lt = document.getElementById('last-time-pill');
-  const fp = document.getElementById('founding-spots-pill');
   if (wp) wp.textContent = wl.toLocaleString() + ' people';
   if (lp) lp.textContent = d.lastName || 'Ayala';
   if (lt) lt.textContent = d.lastTime || '2h ago';
-  if (fp) fp.textContent = spotsLeft;
-
-  // spots bar
-  const st = document.getElementById('spots-taken');
-  const sf = document.getElementById('spots-fill');
-  if (st) st.textContent = f;
-  if (sf) sf.style.width = pct + '%';
 }
 
 loadStats();
@@ -863,114 +756,6 @@ async function handleWaitlistSubmit() {
     showToast('⚠️', 'Google Sheet sync failed', 'Your letter was not saved. Fix Apps Script, then try again.', '#C0442A');
   }
 }
-
-/* ═══════════════════════════════════════════
-   PAYPAL BUTTONS
-   ═══════════════════════════════════════════ */
-const PLANS = {
-  '5':  { amount:'5.00',  description:'LetterMatch — A Coffee (Support)' },
-  '49': { amount:'49.00', description:'LetterMatch — Founding Member (Lifetime Access)' },
-  '19': { amount:'19.00', description:'LetterMatch — Premium Pre-order' }
-};
-
-function updatePayBtn(tier) {
-  // intentionally shows error only if unchecked — buttons are rendered once on load
-  // The PayPal button checks consent at click time
-}
-
-let paypalSdkPromise = null;
-function loadPaypalSdk() {
-  if (window.paypal_sdk) return Promise.resolve(window.paypal_sdk);
-  if (paypalSdkPromise) return paypalSdkPromise;
-
-  const clientId = (APP_CONFIG.PAYPAL_CLIENT_ID || '').trim();
-  if (!clientId || clientId === 'YOUR_PAYPAL_CLIENT_ID') {
-    window.paypalFailed = true;
-    return Promise.resolve(null);
-  }
-
-  const src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(clientId)
-    + '&currency=' + encodeURIComponent(APP_CONFIG.PAYPAL_CURRENCY || 'USD')
-    + '&intent=capture';
-
-  paypalSdkPromise = new Promise(resolve => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.async = true;
-    script.dataset.namespace = 'paypal_sdk';
-    script.onload = () => resolve(window.paypal_sdk || null);
-    script.onerror = () => {
-      window.paypalFailed = true;
-      resolve(null);
-    };
-    document.head.appendChild(script);
-  });
-
-  return paypalSdkPromise;
-}
-
-function renderPaypalButtons() {
-  if (window.paypalFailed || !window.paypal_sdk) {
-    // PayPal SDK not loaded (client ID not set) — show placeholder
-    ['5','49','19'].forEach(tier => {
-      const wrap = document.getElementById('paypal-' + tier);
-      if (wrap) wrap.innerHTML = '<div style="background:#F5EEE0;border:1.5px dashed #C9A040;border-radius:10px;padding:12px;text-align:center;font-size:12px;color:#7A5A20;"><b>PayPal</b> not ready. Set <b>APP_CONFIG.PAYPAL_CLIENT_ID</b> in <code>index.html</code>.</div>';
-    });
-    return;
-  }
-  ['5','49','19'].forEach(tier => {
-    const wrap = document.getElementById('paypal-' + tier);
-    const errEl = document.getElementById('paypal-err-' + tier);
-    if (!wrap) return;
-
-    paypal_sdk.Buttons({
-      style: { layout:'vertical', color:'gold', shape:'pill', label:'pay', height:44 },
-      onClick: function(data, actions) {
-        const checked = document.getElementById('consent-' + tier).checked;
-        if (!checked) {
-          errEl.classList.add('show');
-          return actions.reject();
-        }
-        errEl.classList.remove('show');
-        return actions.resolve();
-      },
-      createOrder: function(data, actions) {
-        const plan = PLANS[tier];
-        return actions.order.create({
-          purchase_units: [{ amount:{ value: plan.amount }, description: plan.description }]
-        });
-      },
-      onApprove: function(data, actions) {
-        return actions.order.capture().then(function(details) {
-          // Record to Google Sheets
-          const payload = {
-            action:'payment',
-            email: details.payer.email_address || '',
-            name: (details.payer.name||{}).given_name || '',
-            amount: PLANS[tier].amount,
-            tier: tier,
-            orderId: details.id,
-            timestamp: new Date().toISOString(),
-            type: 'founding'
-          };
-          if (!SHEETS_URL.includes('YOUR_')) {
-            postAppsScriptJson(SHEETS_URL, payload).catch(() => {});
-          }
-          showToast('💌', 'Thank you, Founding Member.', 'Your support means everything. We\'ll be in touch.', '#C9A040');
-          loadStats();
-        });
-      },
-      onError: function(err) {
-        showToast('⚠️','Payment error','Please try again or contact us.','#C0442A');
-      }
-    }).render('#paypal-' + tier);
-  });
-}
-
-window.addEventListener('DOMContentLoaded', async () => {
-  await loadPaypalSdk();
-  renderPaypalButtons();
-});
 
 /* ═══════════════════════════════════════════
    TOAST
